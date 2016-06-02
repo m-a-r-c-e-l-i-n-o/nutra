@@ -1,0 +1,53 @@
+{
+  "name": "nutra",
+  "version": "0.0.1",
+  "description": "The \"nutra\" module is a simple, extendable unit test runner for node.",
+  "main": "index.js",
+  "registry": "https://registry.npmjs.org",
+  "bin": {
+    "nutra": "./bin/nutra.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "babel src --out-dir dist",
+    "prepublish": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/m-a-r-c-e-l-i-n-o/nutra"
+  },
+  "keywords": [
+    "N.U.T.R.A.",
+    "jasmine",
+    "istanbul",
+    "coverage",
+    "babel",
+    "commonjs",
+    "node",
+    "unit",
+    "test",
+    "testing"
+  ],
+  "author": "m-a-r-c-e-l-i-n-o <me@marceli.no>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/m-a-r-c-e-l-i-n-o/nutra/issues"
+  },
+  "homepage": "https://github.com/m-a-r-c-e-l-i-n-o/nutra#readme",
+  "devDependencies": {
+    "babel-cli": "^6.9.0",
+    "babel-preset-es2016-node5": "^1.1.2"
+  },
+  "dependencies": {
+    "commander": "^2.9.0",
+    "exit": "^0.1.2",
+    "glob": "^7.0.3",
+    "lodash": "^4.13.1",
+    "minimatch": "^3.0.0",
+    "nutra-babel": "0.0.3",
+    "nutra-commonjs": "0.0.2",
+    "nutra-coverage": "0.0.0",
+    "nutra-helper": "^0.0.7",
+    "nutra-jasmine": "0.0.1"
+  }
+}
