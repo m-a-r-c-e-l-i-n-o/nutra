@@ -11,54 +11,55 @@ import Helper from 'nutra-helper'
 class Private {
 
     constructor(opts) {
-        try {
-            this.system = null
-            this.pluginHooks = null
-            this.prepocessorFilters = null
-            this.init(opts)
-        } catch (e) {this.handleError(e)}
+        this.system = null
+        this.pluginHooks = null
+        this.prepocessorFilters = null
+        this.init(opts)
         return this
     }
 
     async init (opts) {
-        if (!_.isObject(opts)) {
-            throw new Error(`
-                Please provide a valid configuration.
-                Value received is not an object: ${opts}
-            `)
-        }
-        if (!_.isArray(opts.files)) {
-            throw new Error(`
-                Please provide a valid file configuration.
-                Value received is not an array: ${opts.files}
-            `)
-        }
-        var files = this.expandFiles(opts.files)
-        if (files.length === 0) {
-            this.handleError(new Error(`
-                Please provide a valid file configuration.
-                The glob patterns did not amount to any files: ${opts.files}
-                Are the patterns relative to the current working directory?
-            `), true, true)
-        }
-        this.system = {
-            opts: opts,
-            files: files,
-            helper: Helper,
-            tmpDirectory: Path.join(__dirname, '../tmp/'),
-            handleError: this.handleError.bind(this),
-            callbacks: Object.freeze({
-                onFileSourceLoaded: this.onFileSourceLoaded.bind(this)
-            })
-        }
-        Helper.makeDirectory(this.system.tmpDirectory)
-        this.pluginHooks = {
-            preprocessors: this.initPreprocessors(opts.preprocessors),
-            frameworks: this.initFrameworks(opts.frameworks),
-            reporters: this.initReporters(opts.reporters),
-            moduleloader: this.initModuleloader(opts.moduleloader)
-        }
         try {
+            if (!_.isObject(opts)) {
+                throw new Error(`
+                    Please provide a valid configuration.
+                    Value received is not an object: ${opts}
+                `)
+            }
+            if (!_.isArray(opts.files)) {
+                throw new Error(`
+                    Please provide a valid file configuration.
+                    Value received is not an array: ${opts.files}
+                `)
+            }
+            var files = this.expandFiles(opts.files)
+            if (files.length === 0) {
+                throw new Error(`
+                    Please provide a valid file configuration.
+                    The glob patterns did not amount to any files: ${opts.files}
+                    Are the patterns relative to the current working directory?
+                `)
+            }
+        } catch (e) {this.handleError(e, true, true)}
+
+        try {
+            this.system = {
+                opts: opts,
+                files: files,
+                helper: Helper,
+                tmpDirectory: Path.join(__dirname, '../tmp/'),
+                handleError: this.handleError.bind(this),
+                callbacks: Object.freeze({
+                    onFileSourceLoaded: this.onFileSourceLoaded.bind(this)
+                })
+            }
+            Helper.makeDirectory(this.system.tmpDirectory)
+            this.pluginHooks = {
+                preprocessors: this.initPreprocessors(opts.preprocessors),
+                frameworks: this.initFrameworks(opts.frameworks),
+                reporters: this.initReporters(opts.reporters),
+                moduleloader: this.initModuleloader(opts.moduleloader)
+            }
             await this.runHooks('onLoad', 'preprocessors')
             await this.runHooks('onLoad', 'frameworks')
             await this.runHooks('onLoad', 'moduleloader')
