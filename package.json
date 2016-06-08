@@ -1,6 +1,6 @@
 {
   "name": "nutra",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "The \"nutra\" module is a simple, extendable unit test runner for node.",
   "main": "index.js",
   "registry": "https://registry.npmjs.org",
@@ -42,12 +42,11 @@
     "commander": "^2.9.0",
     "exit": "^0.1.2",
     "glob": "^7.0.3",
-    "lodash": "^4.13.1",
     "minimatch": "^3.0.0",
     "nutra-babel": "0.0.3",
     "nutra-commonjs": "0.0.2",
-    "nutra-coverage": "0.0.0",
-    "nutra-helper": "^0.0.7",
+    "nutra-coverage": "0.0.1",
+    "nutra-helper": "^0.0.8",
     "nutra-jasmine": "0.0.1"
   }
 }

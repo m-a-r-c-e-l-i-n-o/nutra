@@ -5,8 +5,9 @@ import Path from 'path'
 import Glob from 'glob'
 import Minimatch from 'minimatch'
 import Exit from 'exit'
-import _ from 'lodash'
 import Helper from 'nutra-helper'
+
+const _ = Helper._
 
 class Private {
 
