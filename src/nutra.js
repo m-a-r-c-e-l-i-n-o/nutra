@@ -306,5 +306,5 @@ export default (opts) => {
     var api = Public
     var privateInstance = new Private(opts)
     api.__private__ = privateInstance
-    return Object.freeze(api)
+    return Helper.cloneObject(api, 'freezed')
 }
