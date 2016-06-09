@@ -101,7 +101,9 @@ class Private {
     }
 
     systemExit () {
-        Helper.removeDirectory(this.system.tmpDirectory)
+        if (this.system && typeof this.system.tmpDirectory === 'string') {
+            Helper.removeDirectory(this.system.tmpDirectory)
+        }
     }
 
     runHooks (hookType, pluginType, parameters) {
@@ -294,7 +296,11 @@ class Private {
             console.error(err.stack)
         }
         if (!warning || exit) {
-            this.systemExit()
+            try {
+                this.systemExit()
+            } catch (e) {
+                console.error(err.stack)
+            }
             Exit(1)
         }
     }
