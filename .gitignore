@@ -9,4 +9,3 @@ node_modules
 # Arbitrary Directories
 dist
 coverage
-test
