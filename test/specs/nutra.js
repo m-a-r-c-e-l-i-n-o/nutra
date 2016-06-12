@@ -1,7 +1,4 @@
-const Mock = require('mock-require')
-const Exit = jasmine.createSpy('Exit')
-Mock('exit', Exit)
-const Nutra = require('../../src/nutra.js').default
+import Nutra from '../../src/nutra.js'
 
 const Options = {
     files: ['test/src/**/*.js'],

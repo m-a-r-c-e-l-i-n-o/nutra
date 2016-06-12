@@ -4,7 +4,6 @@ import Fs from 'fs'
 import Path from 'path'
 import Glob from 'glob'
 import Minimatch from 'minimatch'
-import Exit from 'exit'
 import Helper from 'nutra-helper'
 
 const _ = Helper._
@@ -289,20 +288,19 @@ class Private {
         }
     }
 
-    handleError (err, warning, exit) {
+    handleError (error, warning, fatal) {
         if (warning) {
-            console.warn(err.message)
-        } else {
-            console.error(err.stack)
+            error.stack = ''
         }
-        if (!warning || exit) {
+        if (!warning || fatal) {
             try {
                 this.systemExit()
             } catch (e) {
-                console.error(err.stack)
+                throw e
             }
-            Exit(1)
+            throw error
         }
+        console.warn(error.message)
     }
 }
 
