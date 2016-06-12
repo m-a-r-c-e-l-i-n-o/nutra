@@ -1,6 +1,7 @@
-var Mock = require('mock-require')
-Mock('exit', () => {})
-var Nutra = require('../../src/nutra.js').default
+const Mock = require('mock-require')
+const Exit = jasmine.createSpy('Exit')
+Mock('exit', Exit)
+const Nutra = require('../../src/nutra.js').default
 
 const Options = {
     files: ['test/src/**/*.js'],
@@ -28,5 +29,40 @@ describe ('Nutra constructor', () => {
             TypeError,
             'Can\'t add property hello, object is not extensible'
         )
+    })
+})
+
+describe ('Nutra __private__.handleError()', () => {
+    it ('should catch errors when first parameter is passed', () => {
+        const nutra = Nutra(Options)
+        expect(() => nutra.__private__.handleError(new Error('Fatal!')))
+        .toThrowError('Fatal!')
+    })
+    it ('should catch warnings when second parameter is passed', () => {
+        const nutra = Nutra(Options)
+        const consoleWarn = console.warn
+        console.warn = function (message) {
+           expect(message.startsWith('Warning!')).toBeTruthy()
+        }
+        nutra.__private__.handleError(new Error('Warning!'), true)
+        console.warn = consoleWarn
+    })
+    it ('should not throw error when second parameter is passed', () => {
+        const nutra = Nutra(Options)
+        const consoleWarn = console.warn
+        console.warn = () => {}
+        expect(() => nutra.__private__.handleError(new Error('Warning!'), true))
+        .not.toThrowError('Warning!')
+        console.warn = consoleWarn
+    })
+    it ('should throw error with no stack when third parameter is passed', () => {
+        const nutra = Nutra(Options)
+        expect(() => nutra.__private__.handleError(new Error('Fatal!'), true, true))
+        .toThrowError('Fatal!')
+        try {
+            nutra.__private__.handleError(new Error('Fatal!'), true, true)
+        } catch(e) {
+            expect(e.stack).toBe('')
+        }
     })
 })
