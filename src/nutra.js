@@ -5,6 +5,7 @@ import Path from 'path'
 import Glob from 'glob'
 import Minimatch from 'minimatch'
 import Helper from 'nutra-helper'
+import AppConfig from '../app.config.js'
 
 const _ = Helper._
 
@@ -46,26 +47,16 @@ class Private {
 
     validateRequiredOptions(opts) {
         if (!_.isObject(opts)) {
-            throw new Error(`
-                Please provide a valid configuration.
-                Value received is not an object: ${opts}
-            `)
+            throw new Error(AppConfig.errors.emptyOptions)
         }
         if (!_.isArray(opts.files)) {
-            throw new Error(`
-                Please provide a valid file configuration.
-                Value received is not an array: ${files}
-            `)
+            throw new Error(AppConfig.errors.invalidFilesOption)
         }
     }
 
     validateFiles (files) {
         if (files.length === 0) {
-            throw new Error(`
-                Please provide a valid file configuration.
-                The glob patterns did not amount to any files.
-                Are the patterns relative to the current working directory?
-            `)
+            throw new Error(AppConfig.errors.emptyFilesOption)
         }
     }
 
