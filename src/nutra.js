@@ -11,48 +11,10 @@ const _ = Helper._
 class Private {
 
     constructor(opts) {
-        this.system = null
-        this.pluginHooks = null
-        this.prepocessorFilters = null
-        this.init(opts)
-        return this
-    }
-
-    async init (opts) {
         try {
-            if (!_.isObject(opts)) {
-                throw new Error(`
-                    Please provide a valid configuration.
-                    Value received is not an object: ${opts}
-                `)
-            }
-            if (!_.isArray(opts.files)) {
-                throw new Error(`
-                    Please provide a valid file configuration.
-                    Value received is not an array: ${opts.files}
-                `)
-            }
-            var files = this.expandFiles(opts.files)
-            if (files.length === 0) {
-                throw new Error(`
-                    Please provide a valid file configuration.
-                    The glob patterns did not amount to any files: ${opts.files}
-                    Are the patterns relative to the current working directory?
-                `)
-            }
-        } catch (e) {this.handleError(e, true, true)}
-
-        try {
-            this.system = {
-                opts: opts,
-                files: files,
-                helper: Helper,
-                tmpDirectory: Path.join(__dirname, '../tmp/'),
-                handleError: this.handleError.bind(this),
-                callbacks: Object.freeze({
-                    onFileSourceLoaded: this.onFileSourceLoaded.bind(this)
-                })
-            }
+            this.validateRequiredOptions(opts)
+            this.system = this.getSystemVariables(opts)
+            this.validateFiles(this.system.files)
             Helper.makeDirectory(this.system.tmpDirectory)
             this.pluginHooks = {
                 preprocessors: this.initPreprocessors(opts.preprocessors),
@@ -60,16 +22,64 @@ class Private {
                 reporters: this.initReporters(opts.reporters),
                 moduleloader: this.initModuleloader(opts.moduleloader)
             }
-            await this.runHooks('onLoad', 'preprocessors')
-            await this.runHooks('onLoad', 'frameworks')
-            await this.runHooks('onLoad', 'moduleloader')
-            await this.runHooks('onExit', 'moduleloader')
-            await this.runHooks('onExit', 'preprocessors')
-            await this.runHooks('onExit', 'frameworks')
-            await this.runHooks('onLoad', 'reporters')
-            await this.runHooks('onExit', 'reporters')
-            this.systemExit()
-        } catch (e) {this.handleError(e)}
+        } catch (e) {
+            this.handleError(e, true, true)
+        }
+        this.runEvents()
+        .then(this.systemExit.bind(this))
+        .catch(e => {
+            setTimeout(() => { this.handleError(e) }, 0)
+        })
+        return this
+    }
+
+    async runEvents () {
+        await this.runHooks('onLoad', 'preprocessors')
+        await this.runHooks('onLoad', 'frameworks')
+        await this.runHooks('onLoad', 'moduleloader')
+        await this.runHooks('onExit', 'moduleloader')
+        await this.runHooks('onExit', 'preprocessors')
+        await this.runHooks('onExit', 'frameworks')
+        await this.runHooks('onLoad', 'reporters')
+        await this.runHooks('onExit', 'reporters')
+    }
+
+    validateRequiredOptions(opts) {
+        if (!_.isObject(opts)) {
+            throw new Error(`
+                Please provide a valid configuration.
+                Value received is not an object: ${opts}
+            `)
+        }
+        if (!_.isArray(opts.files)) {
+            throw new Error(`
+                Please provide a valid file configuration.
+                Value received is not an array: ${files}
+            `)
+        }
+    }
+
+    validateFiles (files) {
+        if (files.length === 0) {
+            throw new Error(`
+                Please provide a valid file configuration.
+                The glob patterns did not amount to any files.
+                Are the patterns relative to the current working directory?
+            `)
+        }
+    }
+
+    getSystemVariables(opts) {
+        return {
+            opts: opts,
+            files: this.expandFiles(opts.files),
+            helper: Helper,
+            tmpDirectory: Path.join(__dirname, '../tmp/'),
+            handleError: this.handleError.bind(this),
+            callbacks: Object.freeze({
+                onFileSourceLoaded: this.onFileSourceLoaded.bind(this)
+            })
+        }
     }
 
     getEvents (type) {
