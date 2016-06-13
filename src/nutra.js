@@ -65,7 +65,7 @@ class Private {
             opts: opts,
             files: this.expandFiles(opts.files),
             helper: Helper,
-            tmpDirectory: Path.join(__dirname, '../tmp/'),
+            tmpDirectory: AppConfig.tmpDirectory,
             handleError: this.handleError.bind(this),
             callbacks: Object.freeze({
                 onFileSourceLoaded: this.onFileSourceLoaded.bind(this)

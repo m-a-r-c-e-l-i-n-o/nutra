@@ -1,3 +1,5 @@
+var Path = require('path')
+
 var app = {}
 app.errors = {}
 app.errors.emptyOptions = `
@@ -13,5 +15,6 @@ app.errors.emptyFilesOption = `
     The glob patterns did not amount to any files.
     Are the patterns relative to the current working directory?
 `
+app.tmpDirectory = Path.join(__dirname, '/tmp/')
 
 module.exports = app

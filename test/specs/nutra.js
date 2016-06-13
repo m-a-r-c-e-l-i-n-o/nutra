@@ -1,4 +1,6 @@
+import Fs from 'fs'
 import Nutra from '../../src/nutra.js'
+import AppConfig from '../../app.config.js'
 
 const Options = {
     files: ['test/src/**/*.js'],
@@ -61,5 +63,35 @@ describe ('Nutra __private__.handleError()', () => {
         } catch(e) {
             expect(e.stack).toBe('')
         }
+    })
+})
+
+describe ('Nutra __private__.constructor()', () => {
+    let nutra
+    beforeEach(() => {
+        nutra = Nutra(Options).__private__.constructor
+    })
+    it ('should throw fatal warning if options argument is not an object', () => {
+        expect(() => new nutra()).toThrowError(AppConfig.errors.emptyOptions)
+    })
+    it ('should throw fatal warning if files options argument is not an array', () => {
+        expect(() => new nutra({files: undefined}))
+        .toThrowError(AppConfig.errors.invalidFilesOption)
+    })
+    it ('should throw fatal warning if files options argument is not an array', () => {
+        expect(() => new nutra({files: []}))
+        .toThrowError(AppConfig.errors.emptyFilesOption)
+    })
+    it ('should create a temporary directory', () => {
+        expect(() => Fs.accessSync(AppConfig.tmpDirectory, Fs.F_OK))
+        .not.toThrowError()
+    })
+    it ('should throw define a "system" propety', () => {
+        const instance = new nutra(Options)
+        expect(instance.system).toBeDefined()
+    })
+    it ('should throw define a "pluginHooks" propety', () => {
+        const instance = new nutra(Options)
+        expect(instance.pluginHooks).toBeDefined()
     })
 })
