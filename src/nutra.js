@@ -26,12 +26,6 @@ class Private {
         } catch (e) {
             this.handleError(e, true, true)
         }
-        this.runEvents()
-        .then(this.systemExit.bind(this))
-        .catch(e => {
-            setTimeout(() => { this.handleError(e) }, 0)
-        })
-        return this
     }
 
     async runEvents () {
@@ -43,6 +37,14 @@ class Private {
         await this.runHooks('onExit', 'frameworks')
         await this.runHooks('onLoad', 'reporters')
         await this.runHooks('onExit', 'reporters')
+    }
+
+    start () {
+        return this.runEvents()
+            .then(this.systemExit.bind(this))
+            .catch(e => {
+                setTimeout(() => { this.handleError(e) }, 0)
+            })
     }
 
     validateRequiredOptions(opts) {
@@ -305,7 +307,11 @@ class Private {
     }
 }
 
-var Public = {}
+var Public = {
+    start () {
+        return this.__private__.start()
+    }
+}
 
 export default (opts) => {
     var api = Public
