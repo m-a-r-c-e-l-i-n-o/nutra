@@ -14,7 +14,7 @@ class Private {
     constructor(opts) {
         try {
             this.validateRequiredOptions(opts)
-            this.system = this.getSystemVariables(opts)
+            this.system = this.getSystemConstants(opts)
             this.validateFiles(this.system.files)
             Helper.makeDirectory(this.system.tmpDirectory)
             this.pluginHooks = {
@@ -62,7 +62,7 @@ class Private {
         }
     }
 
-    getSystemVariables(opts) {
+    getSystemConstants(opts) {
         return Object.freeze({
             opts: opts,
             files: this.expandFiles(opts.files),
