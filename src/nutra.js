@@ -63,16 +63,16 @@ class Private {
     }
 
     getSystemVariables(opts) {
-        return {
+        return Object.freeze({
             opts: opts,
             files: this.expandFiles(opts.files),
             helper: Helper,
             tmpDirectory: AppConfig.tmpDirectory,
             handleError: this.handleError.bind(this),
-            callbacks: Object.freeze({
+            callbacks: {
                 onFileSourceLoaded: this.onFileSourceLoaded.bind(this)
-            })
-        }
+            }
+        })
     }
 
     getEvents (type) {
