@@ -1,5 +1,6 @@
 import Fs from 'fs'
 import Nutra from '../../src/nutra.js'
+import Helper from 'nutra-helper'
 import AppConfig from '../../app.config.js'
 
 const Options = {
@@ -108,6 +109,46 @@ describe ('Nutra __private__.start()', () => {
         spyOn(nutra, 'runEvents').and.callThrough()
         nutra.start()
         expect(nutra.runEvents).toHaveBeenCalled()
+    })
+})
+
+describe ('Nutra __private__.getSystemConstants()', () => {
+    let nutra
+    beforeEach(() => {
+        nutra = Nutra(Options).__private__
+    })
+    it ('should return an object with the system constants', () => {
+        const system = nutra.getSystemConstants(Options)
+        expect(system.opts).toEqual(Options)
+        expect(system.files[0].lastIndexOf('/test/src/simple.js'))
+        .toEqual(system.files[0].length - 19)
+        expect(system.helper).toEqual(Helper)
+        expect(system.tmpDirectory.lastIndexOf('/tmp/'))
+        .toEqual(system.tmpDirectory.length - 5)
+        expect(system.handleError.name)
+        .toBe(nutra.handleError.bind(nutra).name)
+        expect(system.callbacks.onFileSourceLoaded.name)
+        .toBe(nutra.onFileSourceLoaded.bind(nutra).name)
+    })
+    it ('should return an object that is not be mutable', () => {
+        const mutate = () => {
+            const system = nutra.getSystemConstants(Options)
+            system.files = undefined
+        }
+        expect(mutate).toThrowError(
+            TypeError,
+            'Cannot assign to read only property \'files\' of #<Object>'
+        )
+    })
+    it ('should return an object that is not be extendable', () => {
+        const extend = () => {
+            const system = nutra.getSystemConstants(Options)
+            system.hello = true
+        }
+        expect(extend).toThrowError(
+            TypeError,
+            'Can\'t add property hello, object is not extensible'
+        )
     })
 })
 
