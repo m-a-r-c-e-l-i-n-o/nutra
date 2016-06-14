@@ -95,3 +95,28 @@ describe ('Nutra __private__.constructor()', () => {
         expect(instance.pluginHooks).toBeDefined()
     })
 })
+
+describe ('Nutra __private__.start()', () => {
+    it ('should return a promise and fulfill it', (done) => {
+        let nutra = Nutra(Options).__private__
+        nutra.start().then(result => {
+            done()
+        })
+    })
+    it ('should trigger the __private__.runEvents() method', () => {
+        let nutra = Nutra(Options).__private__
+        spyOn(nutra, 'runEvents').and.callThrough()
+        nutra.start()
+        expect(nutra.runEvents).toHaveBeenCalled()
+    })
+})
+
+describe ('Nutra .start()', () => {
+    it ('should trigger the __private__.start() method', () => {
+        let nutra = Nutra(Options)
+        let privateNutra = nutra.__private__
+        spyOn(privateNutra, 'start').and.callThrough()
+        nutra.start()
+        expect(privateNutra.start).toHaveBeenCalled()
+    })
+})
