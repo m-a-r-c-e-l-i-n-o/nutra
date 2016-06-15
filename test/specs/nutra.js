@@ -158,6 +158,35 @@ describe ('Nutra __private__.getSystemConstants()', () => {
     })
 })
 
+describe ('Nutra __private__.runEvents()', () => {
+    it ('should return a promise and fulfill it', (done) => {
+        let nutra = Nutra(Options).__private__
+        nutra.start().then(result => {
+            done()
+        }).catch(error => {
+            done.fail(error)
+        })
+    })
+    it ('should trigger "runHooks" for each plugin event', (done) => {
+        let nutra = Nutra(Options).__private__
+        spyOn(nutra, 'runHooks').and.callThrough()
+        nutra.runEvents().then(() => {
+            expect(nutra.runHooks).toHaveBeenCalledTimes(8)
+            expect(nutra.runHooks).toHaveBeenCalledWith('onLoad', 'preprocessors')
+            expect(nutra.runHooks).toHaveBeenCalledWith('onLoad', 'frameworks')
+            expect(nutra.runHooks).toHaveBeenCalledWith('onLoad', 'moduleloader')
+            expect(nutra.runHooks).toHaveBeenCalledWith('onExit', 'moduleloader')
+            expect(nutra.runHooks).toHaveBeenCalledWith('onExit', 'preprocessors')
+            expect(nutra.runHooks).toHaveBeenCalledWith('onExit', 'frameworks')
+            expect(nutra.runHooks).toHaveBeenCalledWith('onLoad', 'reporters')
+            expect(nutra.runHooks).toHaveBeenCalledWith('onExit', 'reporters')
+            done()
+        }).catch(error => {
+            done.fail(error)
+        })
+    })
+})
+
 describe ('Nutra .start()', () => {
     it ('should trigger the __private__.start() method', () => {
         let nutra = Nutra(Options)
