@@ -30,6 +30,12 @@ describe ('Nutra constructor', () => {
             'Can\'t add property hello, object is not extensible'
         )
     })
+    it ('should load config from path', () => {
+        const nutra = Nutra('./test/simple.nutra.config.js')
+        expect(nutra.__private__.system.opts).toEqual({
+            files: ['test/src/**/*.js'],
+        })
+    })
 })
 
 describe ('Nutra __private__.handleError()', () => {

@@ -13,15 +13,16 @@ class Private {
 
     constructor(opts) {
         try {
-            this.validateRequiredOptions(opts)
-            this.system = this.getSystemConstants(opts)
+            const options = this.getRequiredOptions(opts)
+            this.validateRequiredOptions(options)
+            this.system = this.getSystemConstants(options)
             this.validateFiles(this.system.files)
             Helper.makeDirectory(this.system.tmpDirectory)
             this.pluginHooks = {
-                preprocessors: this.initPreprocessors(opts.preprocessors),
-                frameworks: this.initFrameworks(opts.frameworks),
-                reporters: this.initReporters(opts.reporters),
-                moduleloader: this.initModuleloader(opts.moduleloader)
+                preprocessors: this.initPreprocessors(options.preprocessors),
+                frameworks: this.initFrameworks(options.frameworks),
+                reporters: this.initReporters(options.reporters),
+                moduleloader: this.initModuleloader(options.moduleloader)
             }
         } catch (e) {
             this.handleError(e, true, true)
@@ -60,6 +61,26 @@ class Private {
         if (files.length === 0) {
             throw new Error(AppConfig.errors.emptyFilesOption)
         }
+    }
+
+    getRequiredOptions(opts) {
+        if (!_.isString(opts)) {
+            return opts
+        }
+        let configWrapper
+        try {
+            configWrapper = require(Path.join(process.cwd(), opts))
+        } catch(e) {
+            throw new Error(AppConfig.errors.invalidOptionsPath)
+        }
+        const config = Helper.cloneObject({
+            options: null,
+            set: function (opts) {
+               this.options = opts
+            }
+        }, 'sealed')
+        configWrapper(config)
+        return config.options
     }
 
     getSystemConstants(opts) {
