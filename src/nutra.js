@@ -64,7 +64,7 @@ class Private {
     }
 
     getRequiredOptions(opts) {
-        if (!_.isString(opts)) {
+        if (!opts || !_.isString(opts)) {
             return opts
         }
         let configWrapper
