@@ -187,6 +187,27 @@ describe ('Nutra __private__.runEvents()', () => {
     })
 })
 
+describe ('Nutra __private__.getRequiredOptions()', () => {
+    it ('should return any non-string or empty argument', () => {
+        const nutra = Nutra(Options).__private__
+        expect(nutra.getRequiredOptions(Options)).toBe(Options)
+        expect(nutra.getRequiredOptions(false)).toBe(false)
+        expect(nutra.getRequiredOptions(null)).toBe(null)
+        expect(nutra.getRequiredOptions('')).toBe('')
+        expect(nutra.getRequiredOptions()).toBeUndefined()
+    })
+    it ('should throw error when the require path is invalid', () => {
+        const nutra = Nutra(Options).__private__
+        expect(() => nutra.getRequiredOptions('path/to/no/where.js'))
+        .toThrowError(AppConfig.errors.invalidOptionsPath)
+    })
+    it ('should an options object when the path is valid', () => {
+        const nutra = Nutra(Options).__private__
+        expect(nutra.getRequiredOptions('./test/simple.nutra.config.js'))
+        .toEqual(Options)
+    })
+})
+
 describe ('Nutra .start()', () => {
     it ('should trigger the __private__.start() method', () => {
         let nutra = Nutra(Options)
