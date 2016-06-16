@@ -255,6 +255,93 @@ describe ('Nutra __private__.systemExit()', () => {
     })
 })
 
+describe ('Nutra __private__.getPluginHooks()', () => {
+    it ('should call plugin constructor and pass parameters', () => {
+        const nutra = Nutra(Options).__private__
+        const spy = jasmine.createSpy('moduleloader');
+        const initializedPlugins = [{
+            name: 'nutra-commonjs',
+            constructor: spy,
+            options: {
+                hello: 'world'
+            }
+        }]
+        const events = {
+            onLoad: null,
+            onExit: null
+        }
+        nutra.getPluginHooks(initializedPlugins, events)
+        expect(spy).toHaveBeenCalledWith(
+            events,
+            nutra.system,
+            initializedPlugins[0].options
+        )
+    })
+    it ('should pass to the constructor an inextendable events object', () => {
+        const nutra = Nutra(Options).__private__
+        const initializedPlugins = [{
+            name: 'nutra-commonjs',
+            constructor: (hooks) => {
+                const extend = () => hooks.hello = 'world'
+                expect(extend).toThrowError(
+                    TypeError,
+                    'Can\'t add property hello, object is not extensible'
+                )
+            },
+            options: {}
+        }]
+        const events = {
+            onLoad: null,
+            onExit: null
+        }
+        nutra.getPluginHooks(initializedPlugins, events)
+    })
+    it ('should pass to the constructor an events object with mutable properties', () => {
+        const nutra = Nutra(Options).__private__
+        const initializedPlugins = [{
+            name: 'nutra-commonjs',
+            constructor: (hooks) => {
+                const assign = () => {
+                    hooks.onLoad = () => {}
+                    hooks.onExit = () => {}
+                }
+                expect(assign).not.toThrowError()
+            },
+            options: {}
+        }]
+        const events = {
+            onLoad: null,
+            onExit: null
+        }
+        nutra.getPluginHooks(initializedPlugins, events)
+    })
+    it ('should return a list of plugins with their respective hooks', () => {
+        const nutra = Nutra(Options).__private__
+        const onLoad = () => {}
+        const onExit = () => {}
+        const initializedPlugins = [{
+            name: 'nutra-commonjs',
+            constructor: (hooks) => {
+                const assign = () => {
+                    hooks.onLoad = onLoad
+                    hooks.onExit = onExit
+                }
+                expect(assign).not.toThrowError()
+            },
+            options: {}
+        }]
+        const events = {
+            onLoad: null,
+            onExit: null
+        }
+        expect(nutra.getPluginHooks(initializedPlugins, events))
+        .toEqual([{
+            name: 'nutra-commonjs',
+            hooks: { onLoad: onLoad, onExit: onExit }
+        }])
+    })
+})
+
 describe ('Nutra .start()', () => {
     it ('should trigger the __private__.start() method', () => {
         let nutra = Nutra(Options)
