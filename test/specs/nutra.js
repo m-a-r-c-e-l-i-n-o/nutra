@@ -208,6 +208,36 @@ describe ('Nutra __private__.getRequiredOptions()', () => {
     })
 })
 
+describe ('Nutra __private__.getEvents()', () => {
+    const commonEvents = {
+        onLoad: null,
+        onExit: null,
+    }
+    it ('should return common events by default', () => {
+        const nutra = Nutra(Options).__private__
+        expect(nutra.getEvents()).toEqual(commonEvents)
+    })
+    it ('should return preprocessors events', () => {
+        const nutra = Nutra(Options).__private__
+        var preprocessorEvents = Object.assign({
+            onFileLoad: null
+        }, commonEvents)
+        expect(nutra.getEvents('preprocessors')).toEqual(preprocessorEvents)
+    })
+    it ('should return reporters events', () => {
+        const nutra = Nutra(Options).__private__
+        expect(nutra.getEvents('reporters')).toEqual(commonEvents)
+    })
+    it ('should return frameworks events', () => {
+        const nutra = Nutra(Options).__private__
+        expect(nutra.getEvents('frameworks')).toEqual(commonEvents)
+    })
+    it ('should return moduleloader events', () => {
+        const nutra = Nutra(Options).__private__
+        expect(nutra.getEvents('moduleloader')).toEqual(commonEvents)
+    })
+})
+
 describe ('Nutra .start()', () => {
     it ('should trigger the __private__.start() method', () => {
         let nutra = Nutra(Options)
