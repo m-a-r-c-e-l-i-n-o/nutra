@@ -180,7 +180,7 @@ class Private {
 
     getPluginHooks (initializedPlugins, events) {
         var pluginHooks = initializedPlugins.map(plugin => {
-            var fishedHooks = Helper.cloneObject(events, true)
+            var fishedHooks = Helper.cloneObject(events, 'sealed')
             plugin.constructor(fishedHooks, this.system, plugin.options)
             return {
                 name: plugin.name,
