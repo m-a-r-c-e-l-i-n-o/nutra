@@ -238,6 +238,23 @@ describe ('Nutra __private__.getEvents()', () => {
     })
 })
 
+describe ('Nutra __private__.systemExit()', () => {
+    it ('should delete temporary directory', () => {
+        const nutra = Nutra(Options).__private__
+        nutra.systemExit()
+        expect(() => Fs.accessSync(AppConfig.tmpDirectory, Fs.F_OK))
+        .toThrowError()
+    })
+    it ('should check if temporary directory exits before deletion', () => {
+        const nutra = Nutra(Options).__private__
+        nutra.system = {}
+        nutra.system.tmpDirectory = null
+        nutra.systemExit()
+        expect(() => Fs.accessSync(AppConfig.tmpDirectory, Fs.F_OK))
+        .not.toThrowError()
+    })
+})
+
 describe ('Nutra .start()', () => {
     it ('should trigger the __private__.start() method', () => {
         let nutra = Nutra(Options)
