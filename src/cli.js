@@ -8,10 +8,8 @@ export default (processArgs) => {
     .option('--config <path>')
     .parse(processArgs)
 
-    let configWrapper
-
     try {
-        configWrapper = require(Path.join(process.cwd(), Commander.config))
+        require(Path.join(process.cwd(), Commander.config))
     } catch(e) {
         console.error(`
             Please provide a valid configuration file.
@@ -22,11 +20,5 @@ export default (processArgs) => {
         return false
     }
 
-    const config = Helper.cloneObject({
-        set: function (opts) {
-            Nutra(opts)
-        }
-    }, 'freezed')
-
-    configWrapper(config)
+    (Nutra(Commander.config)).start()
 }
