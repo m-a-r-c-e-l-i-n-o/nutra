@@ -462,6 +462,20 @@ describe ('Nutra __private__.runPreprocessorOnFileLoadHooks()', () => {
     })
 })
 
+describe ('Nutra __private__.onFileSourceLoaded()', () => {
+    const source = 'Hello World'
+    it ('should trigger nutra\'s private runPreprocessorOnFileLoadHooks method', () => {
+        const nutra = Nutra(Options).__private__
+        spyOn(nutra, 'runPreprocessorOnFileLoadHooks').and.callThrough()
+        nutra.onFileSourceLoaded(source, '1')
+        expect(nutra.runPreprocessorOnFileLoadHooks).toHaveBeenCalledTimes(1)
+    })
+    it ('should return a source string', () => {
+        const nutra = Nutra(Options).__private__
+        expect(nutra.onFileSourceLoaded(source, '1')).toBe(source)
+    })
+})
+
 describe ('Nutra .start()', () => {
     it ('should trigger the __private__.start() method', () => {
         let nutra = Nutra(Options)
