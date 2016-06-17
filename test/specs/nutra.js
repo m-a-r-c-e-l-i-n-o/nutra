@@ -374,6 +374,94 @@ describe ('Nutra __private__.getPreprocessorOnFileLoadHooks()', () => {
     })
 })
 
+describe ('Nutra __private__.runPreprocessorOnFileLoadHooks()', () => {
+    let nutra
+    const hook1 = jasmine.createSpy('hook1')
+    const hook2 = jasmine.createSpy('hook2')
+    const hook3 = jasmine.createSpy('hook3')
+    const source = 'Hello World'
+    const simpleFile = Path.join(process.cwd(), '/test/src/simple.js')
+    beforeEach(() => {
+        nutra = Nutra(Options).__private__
+    })
+    it ('should return the same source if there are no hooks', () => {
+        const sourceReference = {source: source}
+        nutra.getPreprocessorOnFileLoadHooks = () => []
+        expect(nutra.runPreprocessorOnFileLoadHooks(sourceReference))
+        .toBe(sourceReference)
+    })
+    it ('should trigger all hooks once', () => {
+        const source = 'Hello World'
+        nutra.getPreprocessorOnFileLoadHooks = () => [hook1, hook2, hook3]
+        nutra.runPreprocessorOnFileLoadHooks(source, simpleFile)
+        expect(hook1).toHaveBeenCalledTimes(1)
+        expect(hook2).toHaveBeenCalledTimes(1)
+        expect(hook3).toHaveBeenCalledTimes(1)
+    })
+    it ('should trigger hooks with "source" and "filename" arguments', () => {
+        const source = 'Hello World'
+        nutra.getPreprocessorOnFileLoadHooks = () => [hook1, hook2, hook3]
+        nutra.runPreprocessorOnFileLoadHooks(source, simpleFile)
+        expect(hook1).toHaveBeenCalledWith(source, simpleFile)
+        expect(hook2).toHaveBeenCalledWith(source, simpleFile)
+        expect(hook3).toHaveBeenCalledWith(source, simpleFile)
+    })
+    it ('should trigger hooks with the modified source from a previous hook', () => {
+        const source = 'Hello World'
+        const hook1Source = 'Hello World1'
+        const hook2Source = 'Hello World2'
+        const hooks = {
+            1: (source, filename) => {return hook1Source},
+            2: (source, filename) => {return hook2Source},
+            3: (source, filename) => {}
+        }
+        spyOn(hooks, '1').and.callThrough()
+        spyOn(hooks, '2').and.callThrough()
+        spyOn(hooks, '3').and.callThrough()
+        nutra.getPreprocessorOnFileLoadHooks = () => [hooks[1], hooks[2], hooks[3]]
+        nutra.runPreprocessorOnFileLoadHooks(source, simpleFile)
+        expect(hooks[1]).toHaveBeenCalledWith(source, simpleFile)
+        expect(hooks[2]).toHaveBeenCalledWith(hook1Source, simpleFile)
+        expect(hooks[3]).toHaveBeenCalledWith(hook2Source, simpleFile)
+    })
+    it ('should return the last modified source', () => {
+        const source = 'Hello World'
+        const hook1Source = 'Hello World1'
+        const hook2Source = 'Hello World2'
+        const hook3Source = 'Hello World3'
+        const hooks = {
+            1: (source, filename) => {return hook1Source},
+            2: (source, filename) => {return hook2Source},
+            3: (source, filename) => {return hook3Source}
+        }
+        nutra.getPreprocessorOnFileLoadHooks = () => [hooks[1], hooks[2], hooks[3]]
+        expect(nutra.runPreprocessorOnFileLoadHooks(source, simpleFile))
+        .toBe(hook3Source)
+    })
+    it ('should trigger hooks with the modified filename and source from a previous hook', () => {
+        const source = 'Hello World'
+        const hook1Source = 'Hello World1'
+        const hook2Source = 'Hello World2'
+        const hooks = {
+            1: (source, filename) => {
+                return {filename: '1', source: hook1Source}
+            },
+            2: (source, filename) => {
+                return {filename: '2', source: hook2Source}
+            },
+            3: (source, filename) => {}
+        }
+        spyOn(hooks, '1').and.callThrough()
+        spyOn(hooks, '2').and.callThrough()
+        spyOn(hooks, '3').and.callThrough()
+        nutra.getPreprocessorOnFileLoadHooks = () => [hooks[1], hooks[2], hooks[3]]
+        nutra.runPreprocessorOnFileLoadHooks(source, simpleFile, true)
+        expect(hooks[1]).toHaveBeenCalledWith(source, simpleFile)
+        expect(hooks[2]).toHaveBeenCalledWith(hook1Source, '1')
+        expect(hooks[3]).toHaveBeenCalledWith(hook2Source, '2')
+    })
+})
+
 describe ('Nutra .start()', () => {
     it ('should trigger the __private__.start() method', () => {
         let nutra = Nutra(Options)
