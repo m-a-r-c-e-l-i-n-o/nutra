@@ -194,8 +194,8 @@ class Private {
         return this.runPreprocessorOnFileLoadHooks(source, filename)
     }
 
-    runPreprocessorOnFileLoadHooks (source, filename) {
-        var hooks = _.chain(this.pluginHooks['preprocessors'])
+    getPreprocessorOnFileLoadHooks (filename) {
+        return _.chain(this.pluginHooks['preprocessors'])
             .filter(plugin => {
                 var globs = this.prepocessorFilters[plugin.name]
                 return (
@@ -209,6 +209,10 @@ class Private {
             })
             .map(plugin => plugin.hooks['onFileLoad'])
             .value()
+    }
+
+    runPreprocessorOnFileLoadHooks (source, filename) {
+        var hooks = this.getPreprocessorOnFileLoadHooks(filename)
 
         if (hooks.length === 0) {
             return source
