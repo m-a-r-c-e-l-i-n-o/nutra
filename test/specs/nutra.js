@@ -1,4 +1,5 @@
 import Fs from 'fs'
+import Path from 'path'
 import Nutra from '../../src/nutra.js'
 import Helper from 'nutra-helper'
 import AppConfig from '../../app.config.js'
@@ -339,6 +340,37 @@ describe ('Nutra __private__.getPluginHooks()', () => {
             name: 'nutra-commonjs',
             hooks: { onLoad: onLoad, onExit: onExit }
         }])
+    })
+})
+
+describe ('Nutra __private__.getPreprocessorOnFileLoadHooks()', () => {
+    let nutra
+    const simpleFile = Path.join(process.cwd(), '/test/src/simple.js')
+    const specFile = Path.join(process.cwd(), '/test/spec/nutra.js')
+    const onFileLoadHook = () => console.log('Hello From onFileLoad!')
+    beforeEach(() => {
+        nutra = Nutra(Options).__private__
+        nutra.prepocessorFilters = {
+            'nutra-fakeprep': ['./test/src/**']
+        }
+        nutra.pluginHooks.preprocessors = [{
+            name: 'nutra-fakeprep',
+            hooks: {onFileLoad: onFileLoadHook}
+        }]
+    })
+    it ('should return an empty array when no hooks are found', () => {
+        expect(nutra.getPreprocessorOnFileLoadHooks(specFile))
+        .toEqual([])
+    })
+    it ('should return an array of hooks when hooks are found', () => {
+        expect(nutra.getPreprocessorOnFileLoadHooks(simpleFile))
+        .toEqual([onFileLoadHook])
+    })
+    it ('should return an empty array when there are no preprocessors', () => {
+        nutra.pluginHooks.preprocessors = undefined
+        nutra.prepocessorFilters = undefined
+        expect(nutra.getPreprocessorOnFileLoadHooks(simpleFile))
+        .toEqual([])
     })
 })
 
