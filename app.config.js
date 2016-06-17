@@ -19,6 +19,11 @@ app.errors.emptyFilesOption = `
     The glob patterns did not amount to any files.
     Are the patterns relative to the current working directory?
 `
+app.errors.invalidCLIConfigOption = `
+    Please provide a valid configuration file.
+    Value received did not lead to a valid module.
+    Did you pass a config parameter? --config "path/to/nutra.config.js"
+`
 app.tmpDirectory = Path.join(__dirname, '/tmp/')
 
 module.exports = app
