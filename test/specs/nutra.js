@@ -511,6 +511,23 @@ describe ('Nutra __private__.expandFiles()', () => {
     })
 })
 
+describe ('Nutra __private__.getPluginOptions()', () => {
+    const fakeOptions = Object.assign({}, Options, {
+            fakeOptions: {
+                hello: 'World!'
+            }
+        })
+    const nutra = Nutra(fakeOptions).__private__
+    it ('should return an object with the plugin\'s options passed in config', () => {
+        expect(nutra.getPluginOptions('nutra-fake'))
+        .toEqual(fakeOptions.fakeOptions)
+    })
+    it ('should return options even if plugin argument has not "nutra" prefix', () => {
+        expect(nutra.getPluginOptions('fake'))
+        .toEqual(fakeOptions.fakeOptions)
+    })
+})
+
 describe ('Nutra .start()', () => {
     it ('should trigger the __private__.start() method', () => {
         let nutra = Nutra(Options)
