@@ -546,6 +546,21 @@ describe ('Nutra __private__.getPrepocessors()', () => {
     })
 })
 
+describe ('Nutra __private__.getPrepocessorFilters()', () => {
+    const nutra = Nutra(Options).__private__
+    it ('should return an object of plugin names with their respective globs', () => {
+        expect(nutra.getPrepocessorFilters({
+            'test/specs/**/*.js': [ 'nutra-fake1' ],
+            'src/**/*.js': [ 'nutra-fake1' ],
+            'fake/**/*.js': [ 'nutra-fake2' ],
+        }))
+        .toEqual({
+            'nutra-fake1': [ 'test/specs/**/*.js', 'src/**/*.js' ],
+            'nutra-fake2': [ 'fake/**/*.js' ]
+        })
+    })
+})
+
 describe ('Nutra .start()', () => {
     it ('should trigger the __private__.start() method', () => {
         let nutra = Nutra(Options)
