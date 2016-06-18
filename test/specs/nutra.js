@@ -496,6 +496,21 @@ describe ('Nutra __private__.matchGlobs()', () => {
     })
 })
 
+describe ('Nutra __private__.expandFiles()', () => {
+    const simpleFile = Path.join(process.cwd(), '/test/src/simple.js')
+    const specFile = Path.join(process.cwd(), '/test/specs/nutra.js')
+    it ('should return list with full file paths', () => {
+        const nutra = Nutra(Options).__private__
+        expect(nutra.expandFiles(['./test/src/**/*.js', './test/specs/**/*.js']))
+        .toEqual(jasmine.arrayContaining([specFile, simpleFile]))
+    })
+    it ('should return list with full file paths with no duplicates', () => {
+        const nutra = Nutra(Options).__private__
+        const files = nutra.expandFiles(['./test/src/**/*.js', './test/src/**/*.js'])
+        expect(files.filter(file => (file === simpleFile)).length).toBe(1)
+    })
+})
+
 describe ('Nutra .start()', () => {
     it ('should trigger the __private__.start() method', () => {
         let nutra = Nutra(Options)
