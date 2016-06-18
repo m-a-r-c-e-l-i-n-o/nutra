@@ -476,6 +476,26 @@ describe ('Nutra __private__.onFileSourceLoaded()', () => {
     })
 })
 
+describe ('Nutra __private__.matchGlobs()', () => {
+    const simpleFile = Path.join(process.cwd(), '/test/src/simple.js')
+    it ('should return true if filename matches a glob in the array', () => {
+        const nutra = Nutra(Options).__private__
+        expect(nutra.matchGlobs(
+            ['./test/src/**', './test/specs/**'],
+            simpleFile
+        ))
+        .toBe(true)
+    })
+    it ('should return false if filename does not matches any globs in the array', () => {
+        const nutra = Nutra(Options).__private__
+        expect(nutra.matchGlobs(
+            ['./test/fake/**', './test/specs/**'],
+            simpleFile
+        ))
+        .toBe(false)
+    })
+})
+
 describe ('Nutra .start()', () => {
     it ('should trigger the __private__.start() method', () => {
         let nutra = Nutra(Options)
