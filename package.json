@@ -36,7 +36,8 @@
   "homepage": "https://github.com/m-a-r-c-e-l-i-n-o/nutra#readme",
   "devDependencies": {
     "babel-cli": "^6.9.0",
-    "babel-preset-es2016-node5": "^1.1.2"
+    "babel-preset-es2016-node5": "^1.1.2",
+    "nutra-plugin": "0.0.0"
   },
   "dependencies": {
     "commander": "^2.9.0",

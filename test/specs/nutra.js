@@ -561,6 +561,34 @@ describe ('Nutra __private__.getPrepocessorFilters()', () => {
     })
 })
 
+describe ('Nutra __private__.initPlugin()', () => {
+    const nutra = Nutra(Options).__private__
+    it ('should return the constructor for a framework plugin', () => {
+        const constructor = nutra.initPlugin('nutra-plugin', 'framework')
+        expect(constructor()).toBe('framework')
+    })
+    it ('should return the constructor for a preprocessor plugin', () => {
+        const constructor = nutra.initPlugin('nutra-plugin', 'preprocessor')
+        expect(constructor()).toBe('preprocessor')
+    })
+    it ('should return the constructor for a reporter plugin', () => {
+        const constructor = nutra.initPlugin('nutra-plugin', 'reporter')
+        expect(constructor()).toBe('reporter')
+    })
+    it ('should return the constructor for a moduleloader plugin', () => {
+        const constructor = nutra.initPlugin('nutra-plugin', 'moduleloader')
+        expect(constructor()).toBe('moduleloader')
+    })
+    it ('should return the constructor even if plugin have no "nutra" prefix', () => {
+        const constructor = nutra.initPlugin('plugin', 'moduleloader')
+        expect(constructor()).toBe('moduleloader')
+    })
+    it ('should throw error if plugin is not found', () => {
+        expect(() => nutra.initPlugin('nutra-plugin-x'))
+        .toThrowError('Cannot find module \'nutra-plugin-x\'')
+    })
+})
+
 describe ('Nutra .start()', () => {
     it ('should trigger the __private__.start() method', () => {
         let nutra = Nutra(Options)
