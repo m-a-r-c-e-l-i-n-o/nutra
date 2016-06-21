@@ -589,6 +589,28 @@ describe ('Nutra __private__.initPlugin()', () => {
     })
 })
 
+describe ('Nutra __private__.initPlugins()', () => {
+    const nutra = Nutra(Options).__private__
+    const constructor = () => 'constructor'
+    nutra.initPlugin = () => constructor
+    it ('should return a list of plugins with name, constructor, and options', () => {
+        const list = nutra.initPlugins(
+            ['nutra-plugin1', 'nutra-plugin2'],
+            'preprocessor'
+        )
+        expect(list).toEqual([{
+                name: 'nutra-plugin1',
+                constructor: constructor,
+                options: {}
+            }, {
+                name: 'nutra-plugin2',
+                constructor: constructor,
+                options: {}
+            }
+        ])
+    })
+})
+
 describe ('Nutra .start()', () => {
     it ('should trigger the __private__.start() method', () => {
         let nutra = Nutra(Options)
