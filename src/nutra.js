@@ -19,10 +19,10 @@ class Private {
             this.validateFiles(this.system.files)
             Helper.makeDirectory(this.system.tmpDirectory)
             this.pluginHooks = {
-                preprocessors: this.initPreprocessors(options.preprocessors),
-                frameworks: this.initFrameworks(options.frameworks),
-                reporters: this.initReporters(options.reporters),
-                moduleloader: this.initModuleloader(options.moduleloader)
+                preprocessors: this.initPlugins(options.preprocessors, 'preprocessor'),
+                frameworks: this.initPlugins(options.frameworks, 'framework'),
+                reporters: this.initPlugins(options.reporters, 'reporter'),
+                moduleloader: this.initPlugins(options.moduleloader, 'moduleloader')
             }
         } catch (e) {
             this.handleError(e, true, true)
@@ -90,6 +90,7 @@ class Private {
             helper: Helper,
             tmpDirectory: AppConfig.tmpDirectory,
             handleError: this.handleError.bind(this),
+            defaultModuleloader: 'nutra-commonjs',
             callbacks: {
                 onFileSourceLoaded: this.onFileSourceLoaded.bind(this)
             }
@@ -103,15 +104,15 @@ class Private {
             onExit: null
         }
         switch(type) {
-            case 'preprocessors':
+            case 'preprocessor':
                 events = Object.assign({
                     onFileLoad: null
                 }, commonEvents)
                 break;
-            case 'reporters':
+            case 'reporter':
                 events = Object.assign({}, commonEvents)
                 break;
-            case 'frameworks':
+            case 'framework':
                 events = Object.assign({}, commonEvents)
                 break;
             case 'moduleloader':
@@ -139,43 +140,46 @@ class Private {
         return Promise.all(hooks)
     }
 
-    initModuleloader (moduleloader) {
-        moduleloader = (
-            typeof moduleloader === 'string' ? moduleloader : 'nutra-commonjs'
-        )
-        return this.getPluginHooks(
-            this.initPlugins([moduleloader], 'moduleloader'),
-            this.getEvents('moduleloader')
-        )
-    }
-
-    initPreprocessors (preprocessors) {
-        if (preprocessors !== undefined) {
-            var plugins = this.getPrepocessors(preprocessors)
-            this.prepocessorFilters = this.getPrepocessorFilters(preprocessors)
+    initPlugins (plugins, type) {
+        if (type === 'moduleloader' && !_.isString(plugins)) {
+            plugins = this.system.defaultModuleloader
+        }
+        if (plugins !== undefined) {
+            if (_.isString(plugins)) {
+                plugins = [plugins]
+            }
+            if (type === 'preprocessor') {
+                this.prepocessorFilters = this.getPrepocessorFilters(plugins)
+                plugins = this.getPrepocessors(plugins)
+            }
             return this.getPluginHooks(
-                this.initPlugins(plugins, 'preprocessor'),
-                this.getEvents('preprocessors')
+                this.loadPlugins(plugins, type),
+                this.getEvents(type)
             )
         }
     }
 
-    initFrameworks (frameworks) {
-        if (frameworks !== undefined) {
-            return this.getPluginHooks(
-                this.initPlugins(frameworks, 'framework'),
-                this.getEvents('frameworks')
-            )
+    loadPlugins (plugins, type) {
+        let prefix = 'nutra-'
+        try {
+            return plugins.map(plugin => {
+                if (plugin.startsWith(prefix)) {
+                    prefix = ''
+                }
+                plugin = prefix + plugin
+                return {
+                    name: plugin,
+                    constructor: this.requirePlugin(plugin, type),
+                    options: this.getPluginOptions(plugin)
+                }
+            })
+        } catch (e) {
+            this.handleError(e)
         }
     }
 
-    initReporters (reporters) {
-        if (reporters !== undefined) {
-            return this.getPluginHooks(
-                this.initPlugins(reporters, 'reporter'),
-                this.getEvents('reporters')
-            )
-        }
+    requirePlugin (path, type) {
+        return require(path)[type]
     }
 
     getPluginHooks (initializedPlugins, events) {
@@ -292,28 +296,6 @@ class Private {
             return this.system.opts[name + 'Options']
         }
         return {}
-    }
-
-    initPlugins (plugins, type) {
-        var initializedPlugins = plugins.map(plugin => {
-            return {
-                name: plugin,
-                constructor: this.initPlugin(plugin, type),
-                options: this.getPluginOptions(plugin)
-            }
-        })
-        return initializedPlugins
-    }
-
-    initPlugin (plugin, type) {
-        var prefix = 'nutra-'
-        if (plugin.startsWith(prefix)) prefix = ''
-        var path = prefix + plugin
-        try {
-            return require(path)[type]
-        } catch (e) {
-            this.handleError(e)
-        }
     }
 
     handleError (error, warning, fatal) {

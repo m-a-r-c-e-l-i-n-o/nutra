@@ -134,6 +134,8 @@ describe ('Nutra __private__.getSystemConstants()', () => {
         .toEqual(system.tmpDirectory.length - 5)
         expect(system.handleError.name)
         .toBe(nutra.handleError.bind(nutra).name)
+        expect(system.defaultModuleloader)
+        .toBe('nutra-commonjs')
         expect(system.callbacks.onFileSourceLoaded.name)
         .toBe(nutra.onFileSourceLoaded.bind(nutra).name)
     })
@@ -223,15 +225,15 @@ describe ('Nutra __private__.getEvents()', () => {
         var preprocessorEvents = Object.assign({
             onFileLoad: null
         }, commonEvents)
-        expect(nutra.getEvents('preprocessors')).toEqual(preprocessorEvents)
+        expect(nutra.getEvents('preprocessor')).toEqual(preprocessorEvents)
     })
     it ('should return reporters events', () => {
         const nutra = Nutra(Options).__private__
-        expect(nutra.getEvents('reporters')).toEqual(commonEvents)
+        expect(nutra.getEvents('reporter')).toEqual(commonEvents)
     })
     it ('should return frameworks events', () => {
         const nutra = Nutra(Options).__private__
-        expect(nutra.getEvents('frameworks')).toEqual(commonEvents)
+        expect(nutra.getEvents('framework')).toEqual(commonEvents)
     })
     it ('should return moduleloader events', () => {
         const nutra = Nutra(Options).__private__
@@ -561,42 +563,35 @@ describe ('Nutra __private__.getPrepocessorFilters()', () => {
     })
 })
 
-describe ('Nutra __private__.initPlugin()', () => {
+describe ('Nutra __private__.requirePlugin()', () => {
     const nutra = Nutra(Options).__private__
     it ('should return the constructor for a framework plugin', () => {
-        const constructor = nutra.initPlugin('nutra-plugin', 'framework')
+        const constructor = nutra.requirePlugin('nutra-plugin', 'framework')
         expect(constructor()).toBe('framework')
     })
     it ('should return the constructor for a preprocessor plugin', () => {
-        const constructor = nutra.initPlugin('nutra-plugin', 'preprocessor')
+        const constructor = nutra.requirePlugin('nutra-plugin', 'preprocessor')
         expect(constructor()).toBe('preprocessor')
     })
     it ('should return the constructor for a reporter plugin', () => {
-        const constructor = nutra.initPlugin('nutra-plugin', 'reporter')
+        const constructor = nutra.requirePlugin('nutra-plugin', 'reporter')
         expect(constructor()).toBe('reporter')
     })
     it ('should return the constructor for a moduleloader plugin', () => {
-        const constructor = nutra.initPlugin('nutra-plugin', 'moduleloader')
+        const constructor = nutra.requirePlugin('nutra-plugin', 'moduleloader')
         expect(constructor()).toBe('moduleloader')
-    })
-    it ('should return the constructor even if plugin have no "nutra" prefix', () => {
-        const constructor = nutra.initPlugin('plugin', 'moduleloader')
-        expect(constructor()).toBe('moduleloader')
-    })
-    it ('should throw error if plugin is not found', () => {
-        expect(() => nutra.initPlugin('nutra-plugin-x'))
-        .toThrowError('Cannot find module \'nutra-plugin-x\'')
     })
 })
 
-describe ('Nutra __private__.initPlugins()', () => {
+describe ('Nutra __private__.loadPlugins()', () => {
     const nutra = Nutra(Options).__private__
+    const requirePlugin = nutra.requirePlugin
     const constructor = () => 'constructor'
-    nutra.initPlugin = () => constructor
+    nutra.requirePlugin = () => constructor
     it ('should return a list of plugins with name, constructor, and options', () => {
-        const list = nutra.initPlugins(
+        const list = nutra.loadPlugins(
             ['nutra-plugin1', 'nutra-plugin2'],
-            'preprocessor'
+            'framework'
         )
         expect(list).toEqual([{
                 name: 'nutra-plugin1',
@@ -608,6 +603,102 @@ describe ('Nutra __private__.initPlugins()', () => {
                 options: {}
             }
         ])
+    })
+    it ('should return a list of plugins with normalized names', () => {
+        const list = nutra.loadPlugins(['plugin1', 'plugin2'], 'framework')
+        expect(list).toEqual([{
+                name: 'nutra-plugin1',
+                constructor: constructor,
+                options: {}
+            }, {
+                name: 'nutra-plugin2',
+                constructor: constructor,
+                options: {}
+            }
+        ])
+    })
+    it ('should throw error if plugin is not found', () => {
+        nutra.requirePlugin = requirePlugin
+        const invalid = () => nutra.loadPlugins(['nutra-plugin-x'], 'frameworks')
+        expect(invalid).toThrowError('Cannot find module \'nutra-plugin-x\'')
+    })
+})
+
+describe ('Nutra __private__.initPlugins()', () => {
+    const nutra = Nutra(Options).__private__
+    it ('should return undefined if plugins are undefined', () => {
+        expect(nutra.initPlugins()).toBe(undefined)
+    })
+    it ('should return an object with the plugin name and hooks', () => {
+        expect(nutra.initPlugins('nutra-plugin', 'framework'))
+        .toEqual([{
+            name: 'nutra-plugin',
+            hooks: { onLoad: null, onExit: null }
+        }])
+    })
+    it ('should initialize multiple plugins', () => {
+        expect(nutra.initPlugins(['nutra-plugin', 'nutra-plugin'], 'framework'))
+        .toEqual([{
+                name: 'nutra-plugin',
+                hooks: { onLoad: null, onExit: null }
+            }, {
+                name: 'nutra-plugin',
+                hooks: { onLoad: null, onExit: null }
+            }
+        ])
+    })
+    it ('should initialize framework plugins', () => {
+        expect(nutra.initPlugins('nutra-plugin', 'framework'))
+        .toEqual([{
+            name: 'nutra-plugin',
+            hooks: { onLoad: null, onExit: null }
+        }])
+    })
+    it ('should initialize reporter plugins', () => {
+        expect(nutra.initPlugins('nutra-plugin', 'reporter'))
+        .toEqual([{
+            name: 'nutra-plugin',
+            hooks: { onLoad: null, onExit: null }
+        }])
+    })
+    it ('should initialize preprocessor plugins', () => {
+        expect(nutra.initPlugins({
+            'test/specs/**/*.js': ['nutra-plugin'],
+            'src/**/*.js': ['nutra-plugin']
+        }, 'preprocessor'))
+        .toEqual([{
+            name: 'nutra-plugin',
+            hooks: { onFileLoad: null, onLoad: null, onExit: null }
+        }])
+    })
+    it ('should defined filter property, if plugin is a preprocessor', () => {
+        nutra.prepocessorFilters = undefined
+        nutra.initPlugins({
+            'test/specs/**/*.js': ['nutra-plugin'],
+            'src/**/*.js': ['nutra-plugin']
+        }, 'preprocessor')
+        expect(nutra.prepocessorFilters)
+        .toEqual({ 'nutra-plugin': [ 'test/specs/**/*.js', 'src/**/*.js' ] })
+    })
+    it ('should initialize moduleloader plugins', () => {
+        expect(nutra.initPlugins('nutra-plugin', 'moduleloader'))
+        .toEqual([{
+            name: 'nutra-plugin',
+            hooks: { onLoad: null, onExit: null }
+        }])
+    })
+    it ('should initialize default moduleloader plugins if none is specified', () => {
+        const nutra = Nutra(Options).__private__
+        const constructor = () => 'constructor'
+        nutra.requirePlugin = () => constructor
+        nutra.getPluginHooks = (plugins, type) => {
+            expect(plugins).toEqual([{
+                name: 'nutra-commonjs',
+                constructor: constructor,
+                options: {}
+            }])
+        }
+        nutra.initPlugins(undefined, 'moduleloader')
     })
 })
 
