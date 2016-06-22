@@ -90,10 +90,6 @@ describe ('Nutra __private__.constructor()', () => {
         expect(() => new nutra({files: []}))
         .toThrowError(AppConfig.errors.emptyFilesOption)
     })
-    it ('should create a temporary directory', () => {
-        expect(() => Fs.accessSync(AppConfig.tmpDirectory, Fs.F_OK))
-        .not.toThrowError()
-    })
     it ('should throw define a "system" propety', () => {
         const instance = new nutra(Options)
         expect(instance.system).toBeDefined()
@@ -117,6 +113,12 @@ describe ('Nutra __private__.start()', () => {
         nutra.start()
         expect(nutra.runEvents).toHaveBeenCalled()
     })
+    it ('should create a temporary directory', () => {
+        const nutra = Nutra(Options).__private__
+        nutra.start()
+        expect(() => Fs.accessSync(nutra.system.tmpDirectory, Fs.F_OK))
+        .not.toThrowError()
+    })
 })
 
 describe ('Nutra __private__.getSystemConstants()', () => {
@@ -130,8 +132,8 @@ describe ('Nutra __private__.getSystemConstants()', () => {
         expect(system.files[0].lastIndexOf('/test/src/simple.js'))
         .toEqual(system.files[0].length - 19)
         expect(system.helper).toEqual(Helper)
-        expect(system.tmpDirectory.lastIndexOf('/tmp/'))
-        .toEqual(system.tmpDirectory.length - 5)
+        expect(system.tmpDirectory.indexOf(AppConfig.tmpDirectory))
+        .toEqual(0)
         expect(system.handleError.name)
         .toBe(nutra.handleError.bind(nutra).name)
         expect(system.defaultModuleloader)
@@ -244,17 +246,20 @@ describe ('Nutra __private__.getEvents()', () => {
 describe ('Nutra __private__.systemExit()', () => {
     it ('should delete temporary directory', () => {
         const nutra = Nutra(Options).__private__
+        nutra.start()
         nutra.systemExit()
-        expect(() => Fs.accessSync(AppConfig.tmpDirectory, Fs.F_OK))
+        expect(() => Fs.accessSync(nutra.system.tmpDirectory, Fs.F_OK))
         .toThrowError()
     })
-    it ('should check if temporary directory exits before deletion', () => {
+    it ('should check if temporary directory exists before deletion', () => {
         const nutra = Nutra(Options).__private__
+        const tmpDirectory = nutra.system.tmpDirectory
+        nutra.start()
         nutra.system = {}
         nutra.system.tmpDirectory = null
         nutra.systemExit()
-        expect(() => Fs.accessSync(AppConfig.tmpDirectory, Fs.F_OK))
-        .not.toThrowError()
+        expect(() => Fs.accessSync(tmpDirectory, Fs.F_OK)).not.toThrowError()
+        Helper.removeDirectory(tmpDirectory)
     })
 })
 

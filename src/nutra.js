@@ -17,7 +17,6 @@ class Private {
             this.validateRequiredOptions(options)
             this.system = this.getSystemConstants(options)
             this.validateFiles(this.system.files)
-            Helper.makeDirectory(this.system.tmpDirectory)
             this.pluginHooks = {
                 preprocessors: this.initPlugins(options.preprocessors, 'preprocessor'),
                 frameworks: this.initPlugins(options.frameworks, 'framework'),
@@ -41,6 +40,7 @@ class Private {
     }
 
     start () {
+        Helper.makeDirectory(this.system.tmpDirectory)
         return this.runEvents()
             .then(this.systemExit.bind(this))
             .catch(e => {
@@ -88,7 +88,7 @@ class Private {
             opts: opts,
             files: this.expandFiles(opts.files),
             helper: Helper,
-            tmpDirectory: AppConfig.tmpDirectory,
+            tmpDirectory: this.makeUniqueTmpFolder(),
             handleError: this.handleError.bind(this),
             defaultModuleloader: 'nutra-commonjs',
             callbacks: {
@@ -296,6 +296,25 @@ class Private {
             return this.system.opts[name + 'Options']
         }
         return {}
+    }
+
+    makeUniqueTmpFolder () {
+        const dictionary = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-'
+        let exists, path
+        do {
+            let text = ''
+            for ( var i=0; i < 12; i++ ) {
+                text += dictionary.charAt(Math.floor(Math.random() * dictionary.length))
+            }
+            path = Path.join(AppConfig.tmpDirectory, text)
+            exists = true
+            try {
+                Fs.accessSync(path, Fs.F_OK)
+            } catch (e) {
+                exists = false
+            }
+        } while (exists)
+        return path
     }
 
     handleError (error, warning, fatal) {
