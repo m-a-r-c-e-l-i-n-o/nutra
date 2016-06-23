@@ -37,7 +37,8 @@
   "devDependencies": {
     "babel-cli": "^6.9.0",
     "babel-preset-es2016-node5": "^1.1.2",
-    "nutra-plugin": "0.0.0"
+    "coveralls": "^2.11.9",
+    "nutra-plugin": "0.0.2"
   },
   "dependencies": {
     "commander": "^2.9.0",
@@ -47,7 +48,7 @@
     "nutra-babel": "0.0.3",
     "nutra-commonjs": "0.0.2",
     "nutra-coverage": "0.0.1",
-    "nutra-helper": "^0.0.8",
+    "nutra-helper": "^0.0.9",
     "nutra-jasmine": "0.0.1"
   }
 }
