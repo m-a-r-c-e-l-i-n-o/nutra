@@ -4,6 +4,7 @@ import Nutra from '../../src/nutra.js'
 import Helper from 'nutra-helper'
 import AppConfig from '../../app.config.js'
 
+const NodeVersion = process.versions.node.split('.')[0]
 const Options = {
     files: ['test/src/**/*.js'],
 }
@@ -146,10 +147,12 @@ describe ('Nutra __private__.getSystemConstants()', () => {
             const system = nutra.getSystemConstants(Options)
             system.files = undefined
         }
-        expect(mutate).toThrowError(
-            TypeError,
+        const message = (
+            NodeVersion >= 6 ?
+            'Cannot assign to read only property \'files\' of object \'#<Object>\'' :
             'Cannot assign to read only property \'files\' of #<Object>'
         )
+        expect(mutate).toThrowError(TypeError, message)
     })
     it ('should return an object that is not be extendable', () => {
         const extend = () => {
