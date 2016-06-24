@@ -135,13 +135,28 @@ describe ('Nutra __private__.getSystemConstants()', () => {
         expect(system.helper).toEqual(Helper)
         expect(system.tmpDirectory.indexOf(AppConfig.tmpDirectory))
         .toEqual(0)
-        expect(system.handleError.name)
-        .toBe(nutra.handleError.bind(nutra).name)
-        expect(system.defaultModuleloader)
-        .toBe('nutra-commonjs')
-        expect(system.callbacks.onFileSourceLoaded.name)
-        .toBe(nutra.onFileSourceLoaded.bind(nutra).name)
+        expect(system.handleError).toEqual(jasmine.any(Function))
+        expect(system.callbacks.onFileSourceLoaded).toEqual(jasmine.any(Function))
     })
+
+    it ('should expose a handle error method that calls nutra\'s own handler', () => {
+        const mockHandleError = function () {
+            expect(this).toBe(nutra)
+        }
+        nutra.handleError = mockHandleError
+        const system = nutra.getSystemConstants(Options)
+        system.handleError()
+    })
+
+    it ('should expose a file source loaded callback that calls nutra\'s own handler', () => {
+        const mockOnFileSourceLoaded = function () {
+            expect(this).toBe(nutra)
+        }
+        nutra.onFileSourceLoaded = mockOnFileSourceLoaded
+        const system = nutra.getSystemConstants(Options)
+        system.callbacks.onFileSourceLoaded()
+    })
+
     it ('should return an object that is not be mutable', () => {
         const mutate = () => {
             const system = nutra.getSystemConstants(Options)

@@ -46,7 +46,7 @@
     "minimatch": "^3.0.0",
     "mock-require": "^1.3.0",
     "nutra-babel": "0.0.3",
-    "nutra-commonjs": "0.0.2",
+    "nutra-commonjs": "0.0.3",
     "nutra-coverage": "0.0.1",
     "nutra-helper": "^0.0.9",
     "nutra-jasmine": "0.0.1"
