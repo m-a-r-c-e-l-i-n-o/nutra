@@ -66,6 +66,11 @@ nutra.start()
 ```
 <sub>*The "config" argument is required. Config path is relative to the current working directory (cwd).*</sub>
 
+## Configuration Recipes:
+- [jasmine](https://github.com/m-a-r-c-e-l-i-n-o/nutra/blob/master/recipes/jasmine/nutra.config.js)
+- [jasmine-coverage](https://github.com/m-a-r-c-e-l-i-n-o/nutra/blob/master/recipes/jasmine-coverage/nutra.config.js)
+- [jasmine-coverage-babel](https://github.com/m-a-r-c-e-l-i-n-o/nutra/blob/master/recipes/jasmine-coverage-babel/nutra.config.js)
+
 ## Configuration Anatomy:
 ```js
 // nutra.config.js
