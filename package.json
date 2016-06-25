@@ -10,7 +10,8 @@
   "scripts": {
     "test": "./bin/nutra.js --config ./nutra.config.js",
     "build": "babel src --out-dir dist",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "next-update": "next-update -k true --tldr"
   },
   "repository": {
     "type": "git",
@@ -35,15 +36,16 @@
   },
   "homepage": "https://github.com/m-a-r-c-e-l-i-n-o/nutra#readme",
   "devDependencies": {
-    "babel-cli": "^6.9.0",
+    "babel-cli": "6.10.1",
     "babel-preset-es2016-node5": "^1.1.2",
     "coveralls": "^2.11.9",
+    "next-update": "^1.2.2",
     "nutra-plugin": "0.0.2"
   },
   "dependencies": {
     "commander": "^2.9.0",
-    "glob": "^7.0.3",
-    "minimatch": "^3.0.0",
+    "glob": "7.0.5",
+    "minimatch": "3.0.2",
     "mock-require": "^1.3.0",
     "nutra-babel": "0.0.3",
     "nutra-commonjs": "0.0.3",
