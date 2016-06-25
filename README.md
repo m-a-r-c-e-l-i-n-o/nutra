@@ -2,7 +2,8 @@
 [![npm version](https://badge.fury.io/js/nutra.svg)](https://badge.fury.io/js/nutra)
 [![Coverage Status](https://coveralls.io/repos/github/m-a-r-c-e-l-i-n-o/nutra/badge.svg?branch=master)](https://coveralls.io/github/m-a-r-c-e-l-i-n-o/nutra?branch=master)
 [![Build Status](https://travis-ci.org/m-a-r-c-e-l-i-n-o/nutra.svg?branch=master)](https://travis-ci.org/m-a-r-c-e-l-i-n-o/nutra)
-
+[![Dependency Status](https://david-dm.org/m-a-r-c-e-l-i-n-o/nutra.svg)](https://david-dm.org/m-a-r-c-e-l-i-n-o/nutra)
+[![devDependency Status](https://david-dm.org/m-a-r-c-e-l-i-n-o/nutra/dev-status.svg)](https://david-dm.org/m-a-r-c-e-l-i-n-o/nutra#info=devDependencies)
 
 The "nutra" module is a simple, extendable unit test runner for node.
 
