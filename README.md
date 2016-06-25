@@ -9,15 +9,15 @@ The "nutra" module is a simple, extendable unit test runner for node.
 
 ## Quickstart
 Get the "nutra" module up and running with just a few steps.
-##### Install:
+##### 1) Install:
 ```bash
 npm install --save-dev nutra nutra-jasmine
 ```
 
-##### Grab a recipe file:
-Maybe give [this one](https://github.com/m-a-r-c-e-l-i-n-o/nutra/blob/master/recipes/jasmine/nutra.config.js) a try.
+##### 2) Grab a Recipe File:
+Grab [this one](https://github.com/m-a-r-c-e-l-i-n-o/nutra/blob/master/recipes/jasmine/nutra.config.js) for now and add it to the root of your project.
 
-##### Specify where files live:
+##### 3) Specify Where Files Live:
 ```js
 { // nutra.config.js
   ...
@@ -25,13 +25,89 @@ Maybe give [this one](https://github.com/m-a-r-c-e-l-i-n-o/nutra/blob/master/rec
   ...
 }
 ```
-##### Add to npm scripts (package.json):
-```json
-"scripts": {
-  "test": "nutra --config ./nutra.config.js",
+##### 4) Add to NPM Scripts:
+```js
+{ // package.json
+  ...
+  "scripts": {
+    "test": "nutra --config ./nutra.config.js",
+  }
+  ...
 }
 ```
-##### Run:
+
+##### 5) Run CLI:
 ```bash
-npm test
+npm run test
 ```
+
+## Support
+##### Questions About Usage:
+For questions about usage (i.e. configuration, plugin development, etc), please post them on [StackOverflow](http://stackoverflow.com/) and tag it with the keyword "nutra".
+
+##### Issues:
+For bugs and other unexpected behavior, please post them up on the issue section of this [GitHub](https://github.com/m-a-r-c-e-l-i-n-o/nutra/issues).
+
+## Usage:
+##### CLI:
+Provide a nutra configuration file:<br />
+`nutra --config "path/to/nutra.config.js"`<br />
+<sub>*The "--config" argument is required Path is relative to the current working directory (cwd).*</sub>
+
+##### JS API:
+```js
+const config = 'path/to/nutra.config.js'
+// alternatively, "config" can be an object
+// const config = {
+//   files: ['test/specs/**/*.js', 'src/**/*.js']
+// }
+const nutra = Nutra(config)
+nutra.start()
+```
+<sub>*The "config" argument is required. Config path is relative to the current working directory (cwd).*</sub>
+
+## Configuration Anatomy:
+```js
+// nutra.config.js
+module.exports = function( config ) {
+  config.set({
+
+    // The "files" property allows you to specify the location of your app files and specs.
+    // It expects an array of globs (https://github.com/isaacs/node-glob) and is always required.
+    files: ['test/specs/**/*.js', 'src/**/*.js'],
+
+    // The "frameworks" property allows you to specify nutra framework plugins, this will typically
+    // be your test framework (i.e. jasmine, mocha, etc).
+    frameworks: ['nutra-jasmine'],
+
+    // The "preprocessors" property allows you to specify nutra preprocessors plugins, this will
+    // typically be coverage or transpiling tools (i.e. babel, traceur, typescript, etc).
+    preprocessors: {
+      'test/specs/**/*.js': ['nutra-babel'],
+      'src/**/*.js': ['nutra-babel', 'nutra-coverage']
+    },
+
+    // The "reporters" property allows you to specify nutra reporters plugins, this will
+    // typically be coverage and other reporting tools.
+    reporters: ['nutra-coverage'],
+
+    // The "{{plugin}}Options" property allows you to specify nutra plugin options, this will
+    // vary depending on what plugins you are using. An option property for each plugin must
+    // be specified (i.e. babelOptions: {}, coverageOptions: {}, etc), but it is not required.
+    coverageOptions: {
+      dir : './coverage/',
+      reporters: [
+        { type: 'lcovonly', subdir: '.', file: 'lcov.info' }
+      ]
+    }
+  })
+}
+```
+
+## Contributing
+Pull requests are always welcome. In lieu of a formal styleguide, please:
+- Take care to maintain the existing coding style.
+- Add unit tests for any new or changed functionality.
+
+## Why?
+I get a trill from reinventing a simpler, more efficient wheel.
