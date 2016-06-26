@@ -1,9 +1,13 @@
 {
   "name": "nutra",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "The \"nutra\" module is a simple, extendable unit test runner for node.",
   "main": "index.js",
   "registry": "https://registry.npmjs.org",
+  "engines" : {
+    "node" : "^4.0.0",
+    "npm" : "^3.0.0"
+  },
   "bin": {
     "nutra": "./bin/nutra.js"
   },

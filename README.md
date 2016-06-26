@@ -14,9 +14,11 @@ Get the "nutra" module up and running with just a few steps.
 ```bash
 npm install --save-dev nutra
 ```
+<sub>*Nutra recommends Node v4+, as lower versions of node are not being officially supported.*</sub>
 
 ##### 2) Install Preset:
-Give [this one](https://github.com/m-a-r-c-e-l-i-n-o/nutra-jasmine-preset) a try, for now.
+Give [this one](https://github.com/m-a-r-c-e-l-i-n-o/nutra-jasmine-preset) a try, for now.<br />
+<sub>*Nutra requires presets to be installed with NPM v3+ do to its reliance on a flat dependency tree.*</sub>
 
 ##### 3) Add Nutra to NPM Scripts:
 ```js
