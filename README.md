@@ -9,23 +9,16 @@ The "nutra" module is a simple, extendable unit test runner for node.
 
 ## Quickstart
 Get the "nutra" module up and running with just a few steps.
-##### 1) Install:
+
+##### 1) Install Nutra:
 ```bash
-npm install --save-dev nutra nutra-jasmine
+npm install --save-dev nutra
 ```
 
-##### 2) Grab a Recipe File:
-Grab [this one](https://github.com/m-a-r-c-e-l-i-n-o/nutra/blob/master/recipes/jasmine/nutra.config.js) for now and add it to the root of your project.
+##### 2) Install Preset:
+Give [this one](https://github.com/m-a-r-c-e-l-i-n-o/nutra-jasmine-preset) a try, for now.
 
-##### 3) Specify Where Files Live:
-```js
-{ // nutra.config.js
-  ...
-  files: ['test/specs/**/*.js'],
-  ...
-}
-```
-##### 4) Add to NPM Scripts:
+##### 3) Add Nutra to NPM Scripts:
 ```js
 { // package.json
   ...
@@ -36,7 +29,7 @@ Grab [this one](https://github.com/m-a-r-c-e-l-i-n-o/nutra/blob/master/recipes/j
 }
 ```
 
-##### 5) Run CLI:
+##### 4) Run CLI:
 ```bash
 npm run test
 ```
@@ -66,10 +59,10 @@ nutra.start()
 ```
 <sub>*The "config" argument is required. Config path is relative to the current working directory (cwd).*</sub>
 
-## Configuration Recipes:
-- [jasmine](https://github.com/m-a-r-c-e-l-i-n-o/nutra/blob/master/recipes/jasmine/nutra.config.js)
-- [jasmine-coverage](https://github.com/m-a-r-c-e-l-i-n-o/nutra/blob/master/recipes/jasmine-coverage/nutra.config.js)
-- [jasmine-coverage-babel](https://github.com/m-a-r-c-e-l-i-n-o/nutra/blob/master/recipes/jasmine-coverage-babel/nutra.config.js)
+## Configuration Presets:
+- [jasmine](https://github.com/m-a-r-c-e-l-i-n-o/nutra-jasmine-preset)
+- [jasmine-coverage](https://github.com/m-a-r-c-e-l-i-n-o/nutra-jasmine-coverage-preset)
+- [jasmine-coverage-babel](https://github.com/m-a-r-c-e-l-i-n-o/nutra-jasmine-coverage-babel-preset)
 
 ## Configuration Anatomy:
 ```js
