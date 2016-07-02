@@ -249,7 +249,10 @@ describe ('Nutra __private__.getEvents()', () => {
     })
     it ('should return reporters events', () => {
         const nutra = Nutra(Options).__private__
-        expect(nutra.getEvents('reporter')).toEqual(commonEvents)
+        const reporterEvents = Object.assign({
+            onFrameworkExecution: null
+        }, commonEvents)
+        expect(nutra.getEvents('reporter')).toEqual(reporterEvents)
     })
     it ('should return frameworks events', () => {
         const nutra = Nutra(Options).__private__
@@ -681,7 +684,7 @@ describe ('Nutra __private__.initPlugins()', () => {
         expect(nutra.initPlugins('nutra-plugin', 'reporter'))
         .toEqual([{
             name: 'nutra-plugin',
-            hooks: { onLoad: null, onExit: null }
+            hooks: { onFrameworkExecution: null, onLoad: null, onExit: null }
         }])
     })
     it ('should initialize preprocessor plugins', () => {

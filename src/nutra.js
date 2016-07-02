@@ -34,8 +34,8 @@ class Private {
         await this.runHooks('onLoad', 'moduleloader')
         await this.runHooks('onExit', 'moduleloader')
         await this.runHooks('onExit', 'preprocessors')
-        await this.runHooks('onExit', 'frameworks')
         await this.runHooks('onLoad', 'reporters')
+        await this.runHooks('onExit', 'frameworks')
         await this.runHooks('onExit', 'reporters')
     }
 
@@ -92,7 +92,8 @@ class Private {
             handleError: this.handleError.bind(this),
             defaultModuleloader: 'nutra-commonjs',
             callbacks: {
-                onFileSourceLoaded: this.onFileSourceLoaded.bind(this)
+                onFileSourceLoaded: this.onFileSourceLoaded.bind(this),
+                onFrameworkExecution: this.onFrameworkExecution.bind(this)
             }
         })
     }
@@ -110,7 +111,9 @@ class Private {
                 }, commonEvents)
                 break;
             case 'reporter':
-                events = Object.assign({}, commonEvents)
+                events = Object.assign({
+                    onFrameworkExecution: null
+                }, commonEvents)
                 break;
             case 'framework':
                 events = Object.assign({}, commonEvents)
@@ -196,6 +199,10 @@ class Private {
 
     onFileSourceLoaded (source, filename) {
         return this.runPreprocessorOnFileLoadHooks(source, filename)
+    }
+
+    onFrameworkExecution (framework) {
+        this.runHooks('onFrameworkExecution', 'reporters', [framework])
     }
 
     getPreprocessorOnFileLoadHooks (filename) {
