@@ -104,6 +104,12 @@ module.exports = function( config ) {
 }
 ```
 
+## Nutra Plugins:
+- [nutra-jasmine](https://github.com/m-a-r-c-e-l-i-n-o/nutra-jasmine)
+- [nutra-coverage](https://github.com/m-a-r-c-e-l-i-n-o/nutra-coverage)
+- [nutra-babel](https://github.com/m-a-r-c-e-l-i-n-o/nutra-babel)
+- [nutra-minimal-reporter](https://github.com/m-a-r-c-e-l-i-n-o/nutra-jasmine)
+
 ## Contributing
 Pull requests are always welcome. In lieu of a formal styleguide, please:
 - Take care to maintain the existing coding style.
