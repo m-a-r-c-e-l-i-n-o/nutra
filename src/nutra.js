@@ -40,12 +40,18 @@ class Private {
     }
 
     start () {
+        const _this = this
         Helper.makeDirectory(this.system.tmpDirectory)
-        return this.runEvents()
-            .then(this.systemExit.bind(this))
-            .catch(e => {
-                setTimeout(() => { this.handleError(e) }, 0)
-            })
+        return _this.runEvents()
+        .then(() => {
+            _this.systemExit.bind(_this)
+            return 0
+        }).catch(e => {
+            setTimeout(() => {
+                _this.handleError(e)
+            }, 0)
+            return 1
+        })
     }
 
     validateRequiredOptions(opts) {
