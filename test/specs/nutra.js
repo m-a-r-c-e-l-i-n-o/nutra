@@ -67,11 +67,6 @@ describe ('Nutra __private__.handleError()', () => {
         const nutra = Nutra(Options)
         expect(() => nutra.__private__.handleError(new Error('Fatal!'), true, true))
         .toThrowError('Fatal!')
-        try {
-            nutra.__private__.handleError(new Error('Fatal!'), true, true)
-        } catch(e) {
-            expect(e.stack).toBe('')
-        }
     })
 })
 
@@ -85,11 +80,30 @@ describe ('Nutra __private__.constructor()', () => {
     })
     it ('should throw fatal warning if files options argument is not an array', () => {
         expect(() => new nutra({files: undefined}))
-        .toThrowError(AppConfig.errors.invalidFilesOption)
+        .toThrowError(
+            AppConfig.errors.invalidFilesOption
+        )
     })
-    it ('should throw fatal warning if files options argument is not an array', () => {
+    it ('should throw fatal warning if files options argument is an empty array', () => {
         expect(() => new nutra({files: []}))
-        .toThrowError(AppConfig.errors.emptyFilesOption)
+        .toThrowError(
+            AppConfig.errors.emptyFilesOption.replace('{{patterns}}', 'None.')
+        )
+    })
+    it ('should throw fatal warning if files options argument has invalid globs', () => {
+        let patterns = '\n    ';
+        patterns += [
+            Path.join(process.cwd(), 'does/not/exist/one/**/*.js'),
+            Path.join(process.cwd(), 'does/not/exist/two/**/*.js')
+        ]
+        .join('\n    ')
+        expect(() => new nutra({files: [
+            'does/not/exist/one/**/*.js',
+            'does/not/exist/two/**/*.js'
+        ]}))
+        .toThrowError(
+            AppConfig.errors.emptyFilesOption.replace('{{patterns}}', patterns)
+        )
     })
     it ('should throw define a "system" propety', () => {
         const instance = new nutra(Options)
@@ -222,7 +236,12 @@ describe ('Nutra __private__.getRequiredOptions()', () => {
     it ('should throw error when the require path is invalid', () => {
         const nutra = Nutra(Options).__private__
         expect(() => nutra.getRequiredOptions('path/to/no/where.js'))
-        .toThrowError(AppConfig.errors.invalidOptionsPath)
+        .toThrowError(
+            AppConfig.errors.invalidOptionsPath.replace(
+                '{{config-path}}',
+                Path.join(process.cwd(), 'path/to/no/where.js')
+            )
+        )
     })
     it ('should an options object when the path is valid', () => {
         const nutra = Nutra(Options).__private__
@@ -378,8 +397,8 @@ describe ('Nutra __private__.getPreprocessorOnFileLoadHooks()', () => {
     const onFileLoadHook = () => console.log('Hello From onFileLoad!')
     beforeEach(() => {
         nutra = Nutra(Options).__private__
-        nutra.prepocessorFilters = {
-            'nutra-fakeprep': ['./test/src/**']
+        nutra.preprocessorFilters = {
+            'nutra-fakeprep': [Path.join(process.cwd(), './test/src/**')]
         }
         nutra.pluginHooks.preprocessors = [{
             name: 'nutra-fakeprep',
@@ -396,7 +415,7 @@ describe ('Nutra __private__.getPreprocessorOnFileLoadHooks()', () => {
     })
     it ('should return an empty array when there are no preprocessors', () => {
         nutra.pluginHooks.preprocessors = undefined
-        nutra.prepocessorFilters = undefined
+        nutra.preprocessorFilters = undefined
         expect(nutra.getPreprocessorOnFileLoadHooks(simpleFile))
         .toEqual([])
     })
@@ -508,8 +527,10 @@ describe ('Nutra __private__.matchGlobs()', () => {
     const simpleFile = Path.join(process.cwd(), '/test/src/simple.js')
     it ('should return true if filename matches a glob in the array', () => {
         const nutra = Nutra(Options).__private__
-        expect(nutra.matchGlobs(
-            ['./test/src/**', './test/specs/**'],
+        expect(nutra.matchGlobs([
+                Path.join(process.cwd(), './test/src/**'),
+                Path.join(process.cwd(), './test/specs/**')
+            ],
             simpleFile
         ))
         .toBe(true)
@@ -524,17 +545,27 @@ describe ('Nutra __private__.matchGlobs()', () => {
     })
 })
 
-describe ('Nutra __private__.expandFiles()', () => {
-    const simpleFile = Path.join(process.cwd(), '/test/src/simple.js')
-    const specFile = Path.join(process.cwd(), '/test/specs/nutra.js')
+describe ('Nutra __private__.normalizeFiles()', () => {
+    const simpleFile = Path.join(process.cwd(), 'test/src/simple.js')
+    const specFile = Path.join(process.cwd(), 'test/specs/nutra.js')
     it ('should return list with full file paths', () => {
         const nutra = Nutra(Options).__private__
-        expect(nutra.expandFiles(['./test/src/**/*.js', './test/specs/**/*.js']))
-        .toEqual(jasmine.arrayContaining([specFile, simpleFile]))
+        expect(nutra.normalizeFiles([
+            Path.join('./test/src/simple.js'),
+            Path.join('./test/specs/nutra.js')
+        ]))
+        .toEqual([simpleFile, specFile])
     })
+})
+
+describe ('Nutra __private__.expandFiles()', () => {
+    const simpleFile = Path.join(process.cwd(), 'test/src/simple.js')
     it ('should return list with full file paths with no duplicates', () => {
         const nutra = Nutra(Options).__private__
-        const files = nutra.expandFiles(['./test/src/**/*.js', './test/src/**/*.js'])
+        const files = nutra.expandFiles([
+            Path.join(process.cwd(), './test/src/**/*.js'),
+            Path.join(process.cwd(), './test/src/**/*.js')
+        ])
         expect(files.filter(file => (file === simpleFile)).length).toBe(1)
     })
 })
@@ -556,17 +587,17 @@ describe ('Nutra __private__.getPluginOptions()', () => {
     })
 })
 
-describe ('Nutra __private__.getPrepocessors()', () => {
+describe ('Nutra __private__.getPreprocessors()', () => {
     const nutra = Nutra(Options).__private__
     it ('should return an array of preprocessor plugin names', () => {
-        expect(nutra.getPrepocessors({
+        expect(nutra.getPreprocessors({
             'test/specs/**/*.js': [ 'nutra-fake1' ],
             'src/**/*.js': [ 'nutra-fake2' ]
         }))
         .toEqual([ 'nutra-fake1', 'nutra-fake2' ])
     })
     it ('should return an array of preprocessor plugin names without duplicates', () => {
-        expect(nutra.getPrepocessors({
+        expect(nutra.getPreprocessors({
             'test/specs/**/*.js': [ 'nutra-fake' ],
             'src/**/*.js': [ 'nutra-fake' ]
         }))
@@ -574,17 +605,20 @@ describe ('Nutra __private__.getPrepocessors()', () => {
     })
 })
 
-describe ('Nutra __private__.getPrepocessorFilters()', () => {
+describe ('Nutra __private__.getPreprocessorFilters()', () => {
     const nutra = Nutra(Options).__private__
     it ('should return an object of plugin names with their respective globs', () => {
-        expect(nutra.getPrepocessorFilters({
+        expect(nutra.getPreprocessorFilters({
             'test/specs/**/*.js': [ 'nutra-fake1' ],
             'src/**/*.js': [ 'nutra-fake1' ],
             'fake/**/*.js': [ 'nutra-fake2' ],
         }))
         .toEqual({
-            'nutra-fake1': [ 'test/specs/**/*.js', 'src/**/*.js' ],
-            'nutra-fake2': [ 'fake/**/*.js' ]
+            'nutra-fake1': [
+                Path.join(process.cwd(), 'test/specs/**/*.js'),
+                Path.join(process.cwd(), 'src/**/*.js')
+            ],
+            'nutra-fake2': [ Path.join(process.cwd(), 'fake/**/*.js') ]
         })
     })
 })
@@ -698,13 +732,16 @@ describe ('Nutra __private__.initPlugins()', () => {
         }])
     })
     it ('should defined filter property, if plugin is a preprocessor', () => {
-        nutra.prepocessorFilters = undefined
+        nutra.preprocessorFilters = undefined
         nutra.initPlugins({
             'test/specs/**/*.js': ['nutra-plugin'],
             'src/**/*.js': ['nutra-plugin']
         }, 'preprocessor')
-        expect(nutra.prepocessorFilters)
-        .toEqual({ 'nutra-plugin': [ 'test/specs/**/*.js', 'src/**/*.js' ] })
+        expect(nutra.preprocessorFilters)
+        .toEqual({'nutra-plugin': [
+            Path.join(process.cwd(), 'test/specs/**/*.js'),
+            Path.join(process.cwd(), 'src/**/*.js')
+        ]})
     })
     it ('should initialize moduleloader plugins', () => {
         expect(nutra.initPlugins('nutra-plugin', 'moduleloader'))

@@ -65,7 +65,17 @@ class Private {
 
     validateFiles (files) {
         if (files.length === 0) {
-            throw new Error(AppConfig.errors.emptyFilesOption)
+            const patterns = (
+                this.system.patterns.length > 0 ?
+                '\n    ' + this.system.patterns.join('\n    ') :
+                'None.'
+            )
+            throw new Error(
+                AppConfig.errors.emptyFilesOption.replace(
+                    '{{patterns}}',
+                    patterns
+                )
+            )
         }
     }
 
@@ -74,10 +84,19 @@ class Private {
             return opts
         }
         let configWrapper
+        const configPath = Path.join(process.cwd(), opts)
         try {
-            configWrapper = require(Path.join(process.cwd(), opts))
+            configWrapper = require(configPath)
         } catch(e) {
-            throw new Error(AppConfig.errors.invalidOptionsPath)
+            if (e.code !== 'MODULE_NOT_FOUND') {
+                throw e
+            }
+            throw new Error(
+                AppConfig.errors.invalidOptionsPath.replace(
+                    '{{config-path}}',
+                    configPath
+                )
+            )
         }
         const config = Helper.cloneObject({
             options: null,
@@ -89,10 +108,18 @@ class Private {
         return config.options
     }
 
+    normalizeFiles(files) {
+        return files.map(
+            filename => Path.join(process.cwd(), filename)
+        )
+    }
+
     getSystemConstants(opts) {
+        const patterns = this.normalizeFiles(opts.files)
         return Object.freeze({
             opts: opts,
-            files: this.expandFiles(opts.files),
+            patterns: patterns,
+            files: this.expandFiles(patterns),
             helper: Helper,
             tmpDirectory: this.makeUniqueTmpFolder(),
             handleError: this.handleError.bind(this),
@@ -158,8 +185,8 @@ class Private {
                 plugins = [plugins]
             }
             if (type === 'preprocessor') {
-                this.prepocessorFilters = this.getPrepocessorFilters(plugins)
-                plugins = this.getPrepocessors(plugins)
+                this.preprocessorFilters = this.getPreprocessorFilters(plugins)
+                plugins = this.getPreprocessors(plugins)
             }
             return this.getPluginHooks(
                 this.loadPlugins(plugins, type),
@@ -214,7 +241,7 @@ class Private {
     getPreprocessorOnFileLoadHooks (filename) {
         return _.chain(this.pluginHooks['preprocessors'])
             .filter(plugin => {
-                var globs = this.prepocessorFilters[plugin.name]
+                var globs = this.preprocessorFilters[plugin.name]
                 return (
                     plugin.hooks &&
                     plugin.hooks['onFileLoad'] &&
@@ -255,7 +282,7 @@ class Private {
     matchGlobs (globs, filename) {
         var i = 0
         while (i < globs.length) {
-            if (Minimatch(filename, Path.join(process.cwd(), globs[i]))) {
+            if (Minimatch(filename, globs[i])) {
                 return true
             }
             i++
@@ -263,20 +290,18 @@ class Private {
         return false
     }
 
-    expandFiles (files) {
+    expandFiles (patterns) {
         var expandedFiles = []
-        files.forEach(pattern => {
+        patterns.forEach(pattern => {
             expandedFiles.push.apply(
                 expandedFiles,
-                Glob.sync(pattern).map(
-                    path => Path.join(process.cwd(), path)
-                )
+                Glob.sync(pattern)
             )
         })
         return Array.from(new Set(expandedFiles))
     }
 
-    getPrepocessors (preprocessors) {
+    getPreprocessors (preprocessors) {
         var results = new Set([])
         for (var glob in preprocessors) {
             preprocessors[glob].forEach(preprocessor => {
@@ -286,17 +311,19 @@ class Private {
         return Array.from(results)
     }
 
-    getPrepocessorFilters (preprocessors) {
-        var prepocessorFilters = {}
+    getPreprocessorFilters (preprocessors) {
+        var preprocessorFilters = {}
         for (var glob in preprocessors) {
             preprocessors[glob].forEach(preprocessor => {
-                if (!prepocessorFilters[preprocessor]) {
-                    prepocessorFilters[preprocessor] = []
+                if (!preprocessorFilters[preprocessor]) {
+                    preprocessorFilters[preprocessor] = []
                 }
-                prepocessorFilters[preprocessor].push(glob)
+                preprocessorFilters[preprocessor].push(
+                    Path.join(process.cwd(), glob)
+                )
             })
         }
-        return prepocessorFilters
+        return preprocessorFilters
     }
 
     getPluginOptions (plugin) {
@@ -330,19 +357,22 @@ class Private {
         return path
     }
 
-    handleError (error, warning, fatal) {
-        if (warning) {
+    handleError(error, warning, fatal) {
+        if (typeof error === 'string') {
+            error = new Error(error)
+        }
+        if (warning && !fatal) {
             error.stack = ''
         }
         if (!warning || fatal) {
             try {
-                this.systemExit()
+                this.systemExit();
             } catch (e) {
-                throw e
+                throw e;
             }
-            throw error
+            throw error;
         }
-        console.warn(error.message)
+        console.warn(error.message);
     }
 }
 

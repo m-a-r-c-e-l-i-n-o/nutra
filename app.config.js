@@ -9,6 +9,7 @@ app.errors.emptyOptions = `
 app.errors.invalidOptionsPath = `
     Please provide a valid configuration path.
     The path received could not be loaded.
+    Path received: "{{config-path}}"
 `
 app.errors.invalidFilesOption = `
     Please provide a valid file configuration.
@@ -18,6 +19,7 @@ app.errors.emptyFilesOption = `
     Please provide a valid file configuration.
     The glob patterns did not amount to any files.
     Are the patterns relative to the current working directory?
+    Patterns received: {{patterns}}
 `
 app.errors.invalidCLIConfigOption = `
     Please provide a valid configuration file.
