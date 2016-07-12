@@ -263,7 +263,7 @@ class Private {
         }
 
         var final = hooks.reduce((previous, hook) => {
-            var result = hook(previous.source, previous.filename)
+            var result = hook(previous.source, previous.filename, previous.key)
             if (_.isObject(result)) {
                 if (typeof result.filename === 'string') {
                     previous.filename = result.filename
@@ -271,11 +271,14 @@ class Private {
                 if (typeof result.source === 'string') {
                     previous.source = result.source
                 }
+                if (typeof result.key === 'string') {
+                    previous.key = result.key
+                }
             } else if (_.isString(result)) {
                 previous.source = result
             }
-            return {source: previous.source, filename: previous.filename}
-        }, {source: source, filename: filename})
+            return {source: previous.source, filename: previous.filename, key: previous.key}
+        }, {source: source, filename: filename, key: Helper.getFileKey(filename)})
         return final.source
     }
 

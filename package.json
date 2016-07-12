@@ -1,6 +1,6 @@
 {
   "name": "nutra",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "The \"nutra\" module is a simple, extendable unit test runner for node.",
   "main": "index.js",
   "registry": "https://registry.npmjs.org",
@@ -43,8 +43,8 @@
     "babel-cli": "6.10.1",
     "babel-preset-es2016-node5": "^1.1.2",
     "coveralls": "^2.11.9",
+    "nutra-jasmine-coverage-babel-preset": "0.0.2",
     "next-update": "^1.2.2",
-    "nutra-jasmine-coverage-babel-preset": "0.0.0",
     "nutra-plugin": "0.0.2"
   },
   "dependencies": {
