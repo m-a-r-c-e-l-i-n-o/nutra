@@ -51,12 +51,10 @@ Provide a nutra configuration file:<br />
 
 ##### JS API:
 ```js
-const config = 'path/to/nutra.config.js'
-// alternatively, "config" can be an object
-// const config = {
-//   files: ['test/specs/**/*.js', 'src/**/*.js']
-// }
-const nutra = Nutra(config)
+const nutra = Nutra({
+  configFile: 'path/to/nutra.config.js', // optional
+  files: ['test/specs/**/*.js', 'src/**/*.js']
+})
 nutra.start()
 ```
 <sub>*The "config" argument is required. Config path is relative to the current working directory (cwd).*</sub>
@@ -75,6 +73,10 @@ module.exports = function( config ) {
     // The "files" property allows you to specify the location of your app files and specs.
     // It expects an array of globs (https://github.com/isaacs/node-glob) and is always required.
     files: ['test/specs/**/*.js', 'src/**/*.js'],
+
+    // The "absolutePaths" boolean property allows you to specify whether or not all file paths
+    // should be treated as absolute. This includes the preprocessor patterns.
+    absolutePaths: false,
 
     // The "frameworks" property allows you to specify nutra framework plugins, this will typically
     // be your test framework (i.e. jasmine, mocha, etc).
