@@ -8,12 +8,10 @@ export default (processArgs) => {
     Commander
     .option('--config <path>')
     .parse(processArgs)
-
     try {
         require(Path.join(process.cwd(), Commander.config))
     } catch(e) {
         throw new Error(AppConfig.errors.invalidCLIConfigOption)
     }
-
-    (Nutra(Commander.config)).start()
+    Nutra({ configFile: Commander.config }).start()
 }

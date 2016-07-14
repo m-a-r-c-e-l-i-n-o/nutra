@@ -80,44 +80,54 @@ class Private {
     }
 
     getRequiredOptions(opts) {
-        if (!opts || !_.isString(opts)) {
-            return opts
+        if (!_.isObject(opts) || _.isArray(opts)) {
+            return null
         }
-        let configWrapper
-        const configPath = Path.join(process.cwd(), opts)
-        try {
-            configWrapper = require(configPath)
-        } catch(e) {
-            if (e.code !== 'MODULE_NOT_FOUND') {
-                throw e
-            }
-            throw new Error(
-                AppConfig.errors.invalidOptionsPath.replace(
-                    '{{config-path}}',
-                    configPath
+        const options = Object.assign({
+            basePath: ( opts.absolutePaths ? '' : process.cwd() )
+        }, opts)
+        if (typeof options.configFile !== 'string') {
+            return options
+        } else {
+            let configWrapper
+            const configPath = Path.join(options.basePath, options.configFile)
+            try {
+                configWrapper = require(configPath)
+            } catch(e) {
+                if (e.code !== 'MODULE_NOT_FOUND') {
+                    throw e
+                }
+                throw new Error(
+                    AppConfig.errors.invalidOptionsPath.replace(
+                        '{{config-path}}',
+                        configPath
+                    )
                 )
-            )
-        }
-        const config = Helper.cloneObject({
-            options: null,
-            set: function (opts) {
-               this.options = opts
             }
-        }, 'sealed')
-        configWrapper(config)
-        return config.options
+            const config = Helper.cloneObject({
+                options: null,
+                set: function (options) {
+                   this.options = options
+                }
+            }, 'sealed')
+            configWrapper(config)
+            return Object.assign({}, config.options, options)
+        }
     }
 
-    normalizeFiles(files) {
+    normalizeFiles(files, basePath) {
         return files.map(
-            filename => Path.join(process.cwd(), filename)
+            filename => Path.join(basePath, filename)
         )
     }
 
     getSystemConstants(opts) {
-        const patterns = this.normalizeFiles(opts.files)
+
+        const patterns = this.normalizeFiles(opts.files, opts.basePath)
         return Object.freeze({
             opts: opts,
+            basePath: opts.basePath,
+            absolutePaths: opts.absolutePaths || false,
             patterns: patterns,
             files: this.expandFiles(patterns),
             helper: Helper,
@@ -315,6 +325,7 @@ class Private {
     }
 
     getPreprocessorFilters (preprocessors) {
+        const _this = this
         var preprocessorFilters = {}
         for (var glob in preprocessors) {
             preprocessors[glob].forEach(preprocessor => {
@@ -322,7 +333,7 @@ class Private {
                     preprocessorFilters[preprocessor] = []
                 }
                 preprocessorFilters[preprocessor].push(
-                    Path.join(process.cwd(), glob)
+                    Path.join(_this.system.basePath, glob)
                 )
             })
         }

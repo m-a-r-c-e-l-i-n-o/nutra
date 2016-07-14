@@ -4,7 +4,7 @@ var app = {}
 app.errors = {}
 app.errors.emptyOptions = `
     Please provide a valid configuration.
-    Value received is not an object or string.
+    Value received is not an object.
 `
 app.errors.invalidOptionsPath = `
     Please provide a valid configuration path.

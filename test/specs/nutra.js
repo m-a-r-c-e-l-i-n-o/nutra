@@ -5,25 +5,25 @@ import Helper from 'nutra-helper'
 import AppConfig from '../../app.config.js'
 
 const NodeVersion = process.versions.node.split('.')[0]
-const Options = {
-    files: ['test/src/**/*.js'],
+const SimpleNutraConfig = {
+    files: ['test/src/**/*.js'] // equivalent to "./test/simple.nutra.config.js"
 }
 
 describe ('Nutra constructor', () => {
     it ('should be an object.', () => {
-        const nutra = Nutra(Options)
+        const nutra = Nutra(SimpleNutraConfig)
         expect(typeof nutra).toBe('object')
     })
     it ('should be an object.', () => {
-        const nutra = Nutra(Options)
+        const nutra = Nutra(SimpleNutraConfig)
         expect(typeof nutra).toBe('object')
     })
     it ('should expose private class.', () => {
-        const nutra = Nutra(Options)
+        const nutra = Nutra(SimpleNutraConfig)
         expect(typeof nutra.__private__).toBe('object')
     })
     it ('should not be mutable.', () => {
-        const nutra = Nutra(Options)
+        const nutra = Nutra(SimpleNutraConfig)
         const mutate = () => {
             nutra.hello = 'world'
         }
@@ -33,21 +33,25 @@ describe ('Nutra constructor', () => {
         )
     })
     it ('should load config from path', () => {
-        const nutra = Nutra('./test/simple.nutra.config.js')
-        expect(nutra.__private__.system.opts).toEqual({
-            files: ['test/src/**/*.js'],
+        const options = {
+            configFile: './test/simple.nutra.config.js'
+        }
+        const nutra = Nutra(options)
+        const outputOptions = Object.assign({}, options, SimpleNutraConfig, {
+            basePath: process.cwd()
         })
+        expect(nutra.__private__.system.opts).toEqual(outputOptions)
     })
 })
 
 describe ('Nutra __private__.handleError()', () => {
     it ('should catch errors when first parameter is passed', () => {
-        const nutra = Nutra(Options)
+        const nutra = Nutra(SimpleNutraConfig)
         expect(() => nutra.__private__.handleError(new Error('Fatal!')))
         .toThrowError('Fatal!')
     })
     it ('should catch warnings when second parameter is passed', () => {
-        const nutra = Nutra(Options)
+        const nutra = Nutra(SimpleNutraConfig)
         const consoleWarn = console.warn
         console.warn = function (message) {
            expect(message.startsWith('Warning!')).toBeTruthy()
@@ -56,7 +60,7 @@ describe ('Nutra __private__.handleError()', () => {
         console.warn = consoleWarn
     })
     it ('should not throw error when second parameter is passed', () => {
-        const nutra = Nutra(Options)
+        const nutra = Nutra(SimpleNutraConfig)
         const consoleWarn = console.warn
         console.warn = () => {}
         expect(() => nutra.__private__.handleError(new Error('Warning!'), true))
@@ -64,7 +68,7 @@ describe ('Nutra __private__.handleError()', () => {
         console.warn = consoleWarn
     })
     it ('should throw error with no stack when third parameter is passed', () => {
-        const nutra = Nutra(Options)
+        const nutra = Nutra(SimpleNutraConfig)
         expect(() => nutra.__private__.handleError(new Error('Fatal!'), true, true))
         .toThrowError('Fatal!')
     })
@@ -73,7 +77,7 @@ describe ('Nutra __private__.handleError()', () => {
 describe ('Nutra __private__.constructor()', () => {
     let nutra
     beforeEach(() => {
-        nutra = Nutra(Options).__private__.constructor
+        nutra = Nutra(SimpleNutraConfig).__private__.constructor
     })
     it ('should throw fatal warning if options argument is not an object', () => {
         expect(() => new nutra()).toThrowError(AppConfig.errors.emptyOptions)
@@ -106,30 +110,30 @@ describe ('Nutra __private__.constructor()', () => {
         )
     })
     it ('should throw define a "system" propety', () => {
-        const instance = new nutra(Options)
+        const instance = new nutra(SimpleNutraConfig)
         expect(instance.system).toBeDefined()
     })
     it ('should throw define a "pluginHooks" propety', () => {
-        const instance = new nutra(Options)
+        const instance = new nutra(SimpleNutraConfig)
         expect(instance.pluginHooks).toBeDefined()
     })
 })
 
 describe ('Nutra __private__.start()', () => {
     it ('should return a promise and fulfill it', (done) => {
-        let nutra = Nutra(Options).__private__
+        let nutra = Nutra(SimpleNutraConfig).__private__
         nutra.start().then(result => {
             done()
         })
     })
     it ('should trigger the __private__.runEvents() method', () => {
-        let nutra = Nutra(Options).__private__
+        let nutra = Nutra(SimpleNutraConfig).__private__
         spyOn(nutra, 'runEvents').and.callThrough()
         nutra.start()
         expect(nutra.runEvents).toHaveBeenCalled()
     })
     it ('should create a temporary directory', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         nutra.start()
         expect(() => Fs.accessSync(nutra.system.tmpDirectory, Fs.F_OK))
         .not.toThrowError()
@@ -138,42 +142,50 @@ describe ('Nutra __private__.start()', () => {
 
 describe ('Nutra __private__.getSystemConstants()', () => {
     let nutra
-    beforeEach(() => {
-        nutra = Nutra(Options).__private__
+    const configWithBasePath = Object.assign({}, SimpleNutraConfig, {
+        basePath: process.cwd()
     })
-    it ('should return an object with the system constants', () => {
-        const system = nutra.getSystemConstants(Options)
-        expect(system.opts).toEqual(Options)
-        expect(system.files[0].lastIndexOf('/test/src/simple.js'))
-        .toEqual(system.files[0].length - 19)
+    beforeEach(() => {
+        nutra = Nutra(SimpleNutraConfig).__private__
+    })
+    it ('should return a system constants object with default properties', () => {
+        const system = nutra.getSystemConstants(configWithBasePath)
+        expect(system.opts).toEqual(configWithBasePath)
+        expect(system.absolutePaths).toBe(false)
+        expect(system.files[0])
+        .toEqual(Path.join(process.cwd(), '/test/src/simple.js'))
         expect(system.helper).toEqual(Helper)
         expect(system.tmpDirectory.indexOf(AppConfig.tmpDirectory))
         .toEqual(0)
         expect(system.handleError).toEqual(jasmine.any(Function))
         expect(system.callbacks.onFileSourceLoaded).toEqual(jasmine.any(Function))
     })
-
+    it ('should return a system constants object with a truthy "absolutePaths" property', () => {
+        const options = Object.assign({
+            absolutePaths: true
+        }, configWithBasePath)
+        const system = nutra.getSystemConstants(options)
+        expect(system.absolutePaths).toEqual(true)
+    })
     it ('should expose a handle error method that calls nutra\'s own handler', () => {
         const mockHandleError = function () {
             expect(this).toBe(nutra)
         }
         nutra.handleError = mockHandleError
-        const system = nutra.getSystemConstants(Options)
+        const system = nutra.getSystemConstants(configWithBasePath)
         system.handleError()
     })
-
     it ('should expose a file source loaded callback that calls nutra\'s own handler', () => {
         const mockOnFileSourceLoaded = function () {
             expect(this).toBe(nutra)
         }
         nutra.onFileSourceLoaded = mockOnFileSourceLoaded
-        const system = nutra.getSystemConstants(Options)
+        const system = nutra.getSystemConstants(configWithBasePath)
         system.callbacks.onFileSourceLoaded()
     })
-
     it ('should return an object that is not be mutable', () => {
         const mutate = () => {
-            const system = nutra.getSystemConstants(Options)
+            const system = nutra.getSystemConstants(configWithBasePath)
             system.files = undefined
         }
         const message = (
@@ -185,7 +197,7 @@ describe ('Nutra __private__.getSystemConstants()', () => {
     })
     it ('should return an object that is not be extendable', () => {
         const extend = () => {
-            const system = nutra.getSystemConstants(Options)
+            const system = nutra.getSystemConstants(configWithBasePath)
             system.hello = true
         }
         expect(extend).toThrowError(
@@ -197,7 +209,7 @@ describe ('Nutra __private__.getSystemConstants()', () => {
 
 describe ('Nutra __private__.runEvents()', () => {
     it ('should return a promise and fulfill it', (done) => {
-        let nutra = Nutra(Options).__private__
+        let nutra = Nutra(SimpleNutraConfig).__private__
         nutra.start().then(result => {
             done()
         }).catch(error => {
@@ -205,7 +217,7 @@ describe ('Nutra __private__.runEvents()', () => {
         })
     })
     it ('should trigger "runHooks" for each plugin event', (done) => {
-        let nutra = Nutra(Options).__private__
+        let nutra = Nutra(SimpleNutraConfig).__private__
         spyOn(nutra, 'runHooks').and.callThrough()
         nutra.runEvents().then(() => {
             expect(nutra.runHooks).toHaveBeenCalledTimes(8)
@@ -225,28 +237,81 @@ describe ('Nutra __private__.runEvents()', () => {
 })
 
 describe ('Nutra __private__.getRequiredOptions()', () => {
-    it ('should return any non-string or empty argument', () => {
-        const nutra = Nutra(Options).__private__
-        expect(nutra.getRequiredOptions(Options)).toBe(Options)
-        expect(nutra.getRequiredOptions(false)).toBe(false)
-        expect(nutra.getRequiredOptions(null)).toBe(null)
-        expect(nutra.getRequiredOptions('')).toBe('')
-        expect(nutra.getRequiredOptions()).toBeUndefined()
+    let nutra
+    beforeEach(() => {
+        nutra = Nutra(SimpleNutraConfig).__private__
     })
-    it ('should throw error when the require path is invalid', () => {
-        const nutra = Nutra(Options).__private__
-        expect(() => nutra.getRequiredOptions('path/to/no/where.js'))
+    it ('should return null when argument is not an object', () => {
+        expect(nutra.getRequiredOptions(false)).toBe(null)
+        expect(nutra.getRequiredOptions(null)).toBe(null)
+        expect(nutra.getRequiredOptions('')).toBe(null)
+        expect(nutra.getRequiredOptions([])).toBe(null)
+        expect(nutra.getRequiredOptions()).toBe(null)
+    })
+    it ('should return the options object with the default "basePath" property', () => {
+        const options = {
+            basePath: process.cwd()
+        }
+        expect(nutra.getRequiredOptions({})).toEqual(options)
+    })
+    it ('should return the options object with the "basePath" property overwritten', () => {
+        const options = {
+            basePath: 'hello'
+        }
+        expect(nutra.getRequiredOptions(options)).toEqual(options)
+    })
+    it ('should return the options object when "configFile" property is not set', () => {
+        const options = {}
+        const outputOptions = Object.assign({}, {
+            basePath: process.cwd()
+        })
+        expect(nutra.getRequiredOptions(options)).toEqual(outputOptions)
+    })
+    it ('should return the options object when "configFile" property is set', () => {
+        const options = {
+            configFile: './test/simple.nutra.config.js'
+        }
+        const outputOptions = Object.assign({}, options, SimpleNutraConfig, {
+            basePath: process.cwd()
+        })
+        expect(nutra.getRequiredOptions(options)).toEqual(outputOptions)
+    })
+    it ('should return the options object when "configFile" & "absolutePaths" ' +
+        'properties are set', () => {
+        const options = {
+            configFile: Path.join(process.cwd(), 'test/simple.nutra.config.js'),
+            absolutePaths: true
+        }
+        const outputOptions = Object.assign({}, options, SimpleNutraConfig, {
+            basePath: ''
+        })
+        expect(nutra.getRequiredOptions(options)).toEqual(outputOptions)
+    })
+    it ('should return the options object when "configFile" & ' +
+        '"absolutePaths" is set, but "absolutePaths" is invalid', () => {
+        const options = {
+            configFile: '/non/existent/root/test/simple.nutra.config.js',
+            absolutePaths: true
+        }
+        expect(() => nutra.getRequiredOptions(options))
+        .toThrowError(
+            AppConfig.errors.invalidOptionsPath.replace(
+                '{{config-path}}',
+                Path.join('/non/existent/root/test/simple.nutra.config.js')
+            )
+        )
+    })
+    it ('should throw error when the config filename is invalid', () => {
+        const options = {
+            configFile: 'path/to/no/where.js'
+        }
+        expect(() => nutra.getRequiredOptions(options))
         .toThrowError(
             AppConfig.errors.invalidOptionsPath.replace(
                 '{{config-path}}',
                 Path.join(process.cwd(), 'path/to/no/where.js')
             )
         )
-    })
-    it ('should an options object when the path is valid', () => {
-        const nutra = Nutra(Options).__private__
-        expect(nutra.getRequiredOptions('./test/simple.nutra.config.js'))
-        .toEqual(Options)
     })
 })
 
@@ -256,43 +321,43 @@ describe ('Nutra __private__.getEvents()', () => {
         onExit: null,
     }
     it ('should return common events by default', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         expect(nutra.getEvents()).toEqual(commonEvents)
     })
     it ('should return preprocessors events', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         var preprocessorEvents = Object.assign({
             onFileLoad: null
         }, commonEvents)
         expect(nutra.getEvents('preprocessor')).toEqual(preprocessorEvents)
     })
     it ('should return reporters events', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         const reporterEvents = Object.assign({
             onFrameworkExecution: null
         }, commonEvents)
         expect(nutra.getEvents('reporter')).toEqual(reporterEvents)
     })
     it ('should return frameworks events', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         expect(nutra.getEvents('framework')).toEqual(commonEvents)
     })
     it ('should return moduleloader events', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         expect(nutra.getEvents('moduleloader')).toEqual(commonEvents)
     })
 })
 
 describe ('Nutra __private__.systemExit()', () => {
     it ('should delete temporary directory', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         nutra.start()
         nutra.systemExit()
         expect(() => Fs.accessSync(nutra.system.tmpDirectory, Fs.F_OK))
         .toThrowError()
     })
     it ('should check if temporary directory exists before deletion', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         const tmpDirectory = nutra.system.tmpDirectory
         nutra.start()
         nutra.system = {}
@@ -305,7 +370,7 @@ describe ('Nutra __private__.systemExit()', () => {
 
 describe ('Nutra __private__.getPluginHooks()', () => {
     it ('should call plugin constructor and pass parameters', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         const spy = jasmine.createSpy('moduleloader');
         const initializedPlugins = [{
             name: 'nutra-commonjs',
@@ -326,7 +391,7 @@ describe ('Nutra __private__.getPluginHooks()', () => {
         )
     })
     it ('should pass to the constructor an inextendable events object', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         const initializedPlugins = [{
             name: 'nutra-commonjs',
             constructor: (hooks) => {
@@ -345,7 +410,7 @@ describe ('Nutra __private__.getPluginHooks()', () => {
         nutra.getPluginHooks(initializedPlugins, events)
     })
     it ('should pass to the constructor an events object with mutable properties', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         const initializedPlugins = [{
             name: 'nutra-commonjs',
             constructor: (hooks) => {
@@ -364,7 +429,7 @@ describe ('Nutra __private__.getPluginHooks()', () => {
         nutra.getPluginHooks(initializedPlugins, events)
     })
     it ('should return a list of plugins with their respective hooks', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         const onLoad = () => {}
         const onExit = () => {}
         const initializedPlugins = [{
@@ -396,7 +461,7 @@ describe ('Nutra __private__.getPreprocessorOnFileLoadHooks()', () => {
     const specFile = Path.join(process.cwd(), '/test/spec/nutra.js')
     const onFileLoadHook = () => console.log('Hello From onFileLoad!')
     beforeEach(() => {
-        nutra = Nutra(Options).__private__
+        nutra = Nutra(SimpleNutraConfig).__private__
         nutra.preprocessorFilters = {
             'nutra-fakeprep': [Path.join(process.cwd(), './test/src/**')]
         }
@@ -430,7 +495,7 @@ describe ('Nutra __private__.runPreprocessorOnFileLoadHooks()', () => {
     const simpleFile = Path.join(process.cwd(), '/test/src/simple.js')
     const simpleKey = 'test|src|simple.js'
     beforeEach(() => {
-        nutra = Nutra(Options).__private__
+        nutra = Nutra(SimpleNutraConfig).__private__
     })
     it ('should return the same source if there are no hooks', () => {
         const sourceReference = {source: source}
@@ -514,13 +579,13 @@ describe ('Nutra __private__.onFileSourceLoaded()', () => {
     const source = 'Hello World'
     const simpleKey = 'test|src|simple.js'
     it ('should trigger nutra\'s private runPreprocessorOnFileLoadHooks method', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         spyOn(nutra, 'runPreprocessorOnFileLoadHooks').and.callThrough()
         nutra.onFileSourceLoaded(source, '1', simpleKey)
         expect(nutra.runPreprocessorOnFileLoadHooks).toHaveBeenCalledTimes(1)
     })
     it ('should return a source string', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         expect(nutra.onFileSourceLoaded(source, '1', simpleKey)).toBe(source)
     })
 })
@@ -528,7 +593,7 @@ describe ('Nutra __private__.onFileSourceLoaded()', () => {
 describe ('Nutra __private__.matchGlobs()', () => {
     const simpleFile = Path.join(process.cwd(), '/test/src/simple.js')
     it ('should return true if filename matches a glob in the array', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         expect(nutra.matchGlobs([
                 Path.join(process.cwd(), './test/src/**'),
                 Path.join(process.cwd(), './test/specs/**')
@@ -538,7 +603,7 @@ describe ('Nutra __private__.matchGlobs()', () => {
         .toBe(true)
     })
     it ('should return false if filename does not matches any globs in the array', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         expect(nutra.matchGlobs(
             ['./test/fake/**', './test/specs/**'],
             simpleFile
@@ -551,19 +616,27 @@ describe ('Nutra __private__.normalizeFiles()', () => {
     const simpleFile = Path.join(process.cwd(), 'test/src/simple.js')
     const specFile = Path.join(process.cwd(), 'test/specs/nutra.js')
     it ('should return list with full file paths', () => {
-        const nutra = Nutra(Options).__private__
-        expect(nutra.normalizeFiles([
-            Path.join('./test/src/simple.js'),
-            Path.join('./test/specs/nutra.js')
-        ]))
+        const nutra = Nutra(SimpleNutraConfig).__private__
+        expect(nutra.normalizeFiles(
+            ['./test/src/simple.js', './test/specs/nutra.js'],
+            process.cwd()
+        ))
         .toEqual([simpleFile, specFile])
+    })
+    it ('should return list of file paths with custom base path', () => {
+        const nutra = Nutra(SimpleNutraConfig).__private__
+        expect(nutra.normalizeFiles(
+            ['/test/src/simple.js', 'test/specs/nutra.js'],
+            '/root/'
+        ))
+        .toEqual(['/root/test/src/simple.js', '/root/test/specs/nutra.js'])
     })
 })
 
 describe ('Nutra __private__.expandFiles()', () => {
     const simpleFile = Path.join(process.cwd(), 'test/src/simple.js')
     it ('should return list with full file paths with no duplicates', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         const files = nutra.expandFiles([
             Path.join(process.cwd(), './test/src/**/*.js'),
             Path.join(process.cwd(), './test/src/**/*.js')
@@ -573,7 +646,7 @@ describe ('Nutra __private__.expandFiles()', () => {
 })
 
 describe ('Nutra __private__.getPluginOptions()', () => {
-    const fakeOptions = Object.assign({}, Options, {
+    const fakeOptions = Object.assign({}, SimpleNutraConfig, {
             fakeOptions: {
                 hello: 'World!'
             }
@@ -590,7 +663,7 @@ describe ('Nutra __private__.getPluginOptions()', () => {
 })
 
 describe ('Nutra __private__.getPreprocessors()', () => {
-    const nutra = Nutra(Options).__private__
+    const nutra = Nutra(SimpleNutraConfig).__private__
     it ('should return an array of preprocessor plugin names', () => {
         expect(nutra.getPreprocessors({
             'test/specs/**/*.js': [ 'nutra-fake1' ],
@@ -608,8 +681,8 @@ describe ('Nutra __private__.getPreprocessors()', () => {
 })
 
 describe ('Nutra __private__.getPreprocessorFilters()', () => {
-    const nutra = Nutra(Options).__private__
     it ('should return an object of plugin names with their respective globs', () => {
+        const nutra = Nutra(SimpleNutraConfig).__private__
         expect(nutra.getPreprocessorFilters({
             'test/specs/**/*.js': [ 'nutra-fake1' ],
             'src/**/*.js': [ 'nutra-fake1' ],
@@ -623,10 +696,28 @@ describe ('Nutra __private__.getPreprocessorFilters()', () => {
             'nutra-fake2': [ Path.join(process.cwd(), 'fake/**/*.js') ]
         })
     })
+    it ('should return an object of plugin names with their absolute patterns', () => {
+        const options = Object.assign({
+            absolutePaths: true
+        }, SimpleNutraConfig)
+        const nutra = Nutra(options).__private__
+        expect(nutra.getPreprocessorFilters({
+            '/root/test/specs/**/*.js': [ 'nutra-fake1' ],
+            '/root/src/**/*.js': [ 'nutra-fake1' ],
+            '/root/fake/**/*.js': [ 'nutra-fake2' ],
+        }))
+        .toEqual({
+            'nutra-fake1': [
+                '/root/test/specs/**/*.js',
+                '/root/src/**/*.js'
+            ],
+            'nutra-fake2': ['/root/fake/**/*.js']
+        })
+    })
 })
 
 describe ('Nutra __private__.requirePlugin()', () => {
-    const nutra = Nutra(Options).__private__
+    const nutra = Nutra(SimpleNutraConfig).__private__
     it ('should return the constructor for a framework plugin', () => {
         const constructor = nutra.requirePlugin('nutra-plugin', 'framework')
         expect(constructor()).toBe('framework')
@@ -646,7 +737,7 @@ describe ('Nutra __private__.requirePlugin()', () => {
 })
 
 describe ('Nutra __private__.loadPlugins()', () => {
-    const nutra = Nutra(Options).__private__
+    const nutra = Nutra(SimpleNutraConfig).__private__
     const requirePlugin = nutra.requirePlugin
     const constructor = () => 'constructor'
     nutra.requirePlugin = () => constructor
@@ -687,7 +778,7 @@ describe ('Nutra __private__.loadPlugins()', () => {
 })
 
 describe ('Nutra __private__.initPlugins()', () => {
-    const nutra = Nutra(Options).__private__
+    const nutra = Nutra(SimpleNutraConfig).__private__
     it ('should return undefined if plugins are undefined', () => {
         expect(nutra.initPlugins()).toBe(undefined)
     })
@@ -753,7 +844,7 @@ describe ('Nutra __private__.initPlugins()', () => {
         }])
     })
     it ('should initialize default moduleloader plugins if none is specified', () => {
-        const nutra = Nutra(Options).__private__
+        const nutra = Nutra(SimpleNutraConfig).__private__
         const constructor = () => 'constructor'
         nutra.requirePlugin = () => constructor
         nutra.getPluginHooks = (plugins, type) => {
@@ -769,7 +860,7 @@ describe ('Nutra __private__.initPlugins()', () => {
 
 describe ('Nutra .start()', () => {
     it ('should trigger the __private__.start() method', () => {
-        let nutra = Nutra(Options)
+        let nutra = Nutra(SimpleNutraConfig)
         let privateNutra = nutra.__private__
         spyOn(privateNutra, 'start').and.callThrough()
         nutra.start()
