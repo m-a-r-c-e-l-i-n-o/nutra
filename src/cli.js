@@ -13,5 +13,7 @@ export default (processArgs) => {
     } catch(e) {
         throw new Error(AppConfig.errors.invalidCLIConfigOption)
     }
-    Nutra({ configFile: Commander.config }).start()
+    Nutra({ configFile: Commander.config }).start().then(exitCode => {
+        setTimeout(() => process.exit(exitCode), 0)
+    })
 }
