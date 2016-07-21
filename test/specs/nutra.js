@@ -75,10 +75,9 @@ describe ('Nutra __private__.handleError()', () => {
 })
 
 describe ('Nutra __private__.constructor()', () => {
-    let nutra
-    beforeEach(() => {
-        nutra = Nutra(SimpleNutraConfig).__private__.constructor
-    })
+
+    let nutra = Nutra(SimpleNutraConfig).__private__.constructor
+
     it ('should throw fatal warning if options argument is not an object', () => {
         expect(() => new nutra()).toThrowError(AppConfig.errors.emptyOptions)
     })

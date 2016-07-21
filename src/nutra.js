@@ -6,6 +6,7 @@ import Glob from 'glob'
 import Minimatch from 'minimatch'
 import Helper from 'nutra-helper'
 import AppConfig from '../app.config.js'
+import { gottaCatchEmAll, gottaReleaseEmAll } from 'gotta-catch-em-all'
 
 const _ = Helper._
 
@@ -13,6 +14,7 @@ class Private {
 
     constructor(opts) {
         try {
+            gottaCatchEmAll()
             const options = this.getRequiredOptions(opts)
             this.validateRequiredOptions(options)
             this.system = this.getSystemConstants(options)
@@ -23,7 +25,9 @@ class Private {
                 reporters: this.initPlugins(options.reporters, 'reporter'),
                 moduleloader: this.initPlugins(options.moduleloader, 'moduleloader')
             }
+            gottaReleaseEmAll()
         } catch (e) {
+            gottaReleaseEmAll()
             this.handleError(e, true, true)
         }
     }
@@ -40,13 +44,15 @@ class Private {
     }
 
     start () {
+        gottaCatchEmAll()
         const _this = this
         Helper.makeDirectory(this.system.tmpDirectory)
         return _this.runEvents()
         .then(() => {
-            _this.systemExit.bind(_this)
+            _this.systemExit()
             return 0
         }).catch(e => {
+            gottaReleaseEmAll()
             setTimeout(() => {
                 _this.handleError(e)
             }, 0)
@@ -171,6 +177,7 @@ class Private {
     }
 
     systemExit () {
+        gottaReleaseEmAll(true)
         if (this.system && typeof this.system.tmpDirectory === 'string') {
             Helper.removeDirectory(this.system.tmpDirectory)
         }
