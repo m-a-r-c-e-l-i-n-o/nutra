@@ -12,7 +12,7 @@
     "nutra": "./bin/nutra.js"
   },
   "scripts": {
-    "test": "./bin/nutra.js --config ./nutra.config.js",
+    "test": "node ./bin/nutra.js --config ./nutra.config.js",
     "build": "babel src --out-dir dist",
     "prepublish": "npm run build",
     "next-update": "next-update -k true --tldr"
