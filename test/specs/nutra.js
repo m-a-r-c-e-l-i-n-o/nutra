@@ -456,9 +456,23 @@ describe ('Nutra __private__.getPluginHooks()', () => {
 
 describe ('Nutra __private__.getPreprocessorOnFileLoadHooks()', () => {
     let nutra
-    const simpleFile = Path.join(process.cwd(), '/test/src/simple.js')
     const specFile = Path.join(process.cwd(), '/test/spec/nutra.js')
     const onFileLoadHook = () => console.log('Hello From onFileLoad!')
+    const mockPluginHooks = [{
+        name: 'nutra-babel',
+        hooks: {
+            onFileLoad: () => {},
+            onLoad: () => {},
+            onExit: () => {}
+        }
+    }, {
+        name: 'nutra-mock',
+        hooks: {
+            onFileLoad: () => {},
+            onLoad: () => {},
+            onExit: () => {}
+        }
+    }]
     beforeEach(() => {
         nutra = Nutra(SimpleNutraConfig).__private__
         nutra.preprocessorFilters = {
@@ -469,19 +483,35 @@ describe ('Nutra __private__.getPreprocessorOnFileLoadHooks()', () => {
             hooks: {onFileLoad: onFileLoadHook}
         }]
     })
-    it ('should return an empty array when no hooks are found', () => {
+    it ('should return an empty object when no hooks are found', () => {
         expect(nutra.getPreprocessorOnFileLoadHooks(specFile))
-        .toEqual([])
+        .toEqual({})
     })
-    it ('should return an array of hooks when hooks are found', () => {
-        expect(nutra.getPreprocessorOnFileLoadHooks(simpleFile))
-        .toEqual([onFileLoadHook])
+    it ('should return an object with the plugin names as the key', () => {
+        expect(nutra.getPreprocessorOnFileLoadHooks(mockPluginHooks))
+        .toEqual({
+            'nutra-babel': {
+                name: 'nutra-babel',
+                onFileLoad: jasmine.any(Function)
+            },
+            'nutra-mock': {
+                name: 'nutra-mock',
+                onFileLoad: jasmine.any(Function)
+            }
+        })
     })
-    it ('should return an empty array when there are no preprocessors', () => {
-        nutra.pluginHooks.preprocessors = undefined
-        nutra.preprocessorFilters = undefined
-        expect(nutra.getPreprocessorOnFileLoadHooks(simpleFile))
-        .toEqual([])
+    it ('should exclude all hooks except the "onFileLoad" hook from the result', () => {
+        expect(nutra.getPreprocessorOnFileLoadHooks(mockPluginHooks))
+        .toEqual({
+            'nutra-babel': {
+                name: 'nutra-babel',
+                onFileLoad: jasmine.any(Function)
+            },
+            'nutra-mock': {
+                name: 'nutra-mock',
+                onFileLoad: jasmine.any(Function)
+            }
+        })
     })
 })
 
@@ -493,18 +523,34 @@ describe ('Nutra __private__.runPreprocessorOnFileLoadHooks()', () => {
     const source = 'Hello World'
     const simpleFile = Path.join(process.cwd(), '/test/src/simple.js')
     const simpleKey = 'test|src|simple.js'
+    const mockPreprocessorsHooks = {
+        'nutra-babel': {
+            name: 'nutra-babel',
+            onFileLoad: hook1
+        },
+        'nutra-mock': {
+            name: 'nutra-mock',
+            onFileLoad: hook2
+        },
+        'nutra-coverage': {
+            name: 'nutra-coverage',
+            onFileLoad: hook3
+        }
+    }
     beforeEach(() => {
         nutra = Nutra(SimpleNutraConfig).__private__
     })
     it ('should return the same source if there are no hooks', () => {
         const sourceReference = {source: source}
-        nutra.getPreprocessorOnFileLoadHooks = () => []
+        nutra.preprocessorsHooks
+        nutra.getFilePreprocessor = () => []
         expect(nutra.runPreprocessorOnFileLoadHooks(sourceReference))
         .toBe(sourceReference)
     })
     it ('should trigger all hooks once', () => {
         const source = 'Hello World'
-        nutra.getPreprocessorOnFileLoadHooks = () => [hook1, hook2, hook3]
+        nutra.preprocessorsHooks = mockPreprocessorsHooks
+        nutra.getFilePreprocessor = () => ['nutra-babel', 'nutra-mock', 'nutra-coverage']
         nutra.runPreprocessorOnFileLoadHooks(source, simpleFile, simpleKey)
         expect(hook1).toHaveBeenCalledTimes(1)
         expect(hook2).toHaveBeenCalledTimes(1)
@@ -512,7 +558,8 @@ describe ('Nutra __private__.runPreprocessorOnFileLoadHooks()', () => {
     })
     it ('should trigger hooks with "source", "filename", and "key" arguments', () => {
         const source = 'Hello World'
-        nutra.getPreprocessorOnFileLoadHooks = () => [hook1, hook2, hook3]
+        nutra.preprocessorsHooks = mockPreprocessorsHooks
+        nutra.getFilePreprocessor = () => ['nutra-babel', 'nutra-mock', 'nutra-coverage']
         nutra.runPreprocessorOnFileLoadHooks(source, simpleFile, simpleKey)
         expect(hook1).toHaveBeenCalledWith(source, simpleFile, simpleKey)
         expect(hook2).toHaveBeenCalledWith(source, simpleFile, simpleKey)
@@ -530,8 +577,15 @@ describe ('Nutra __private__.runPreprocessorOnFileLoadHooks()', () => {
         spyOn(hooks, '1').and.callThrough()
         spyOn(hooks, '2').and.callThrough()
         spyOn(hooks, '3').and.callThrough()
-        nutra.getPreprocessorOnFileLoadHooks = () => [hooks[1], hooks[2], hooks[3]]
+
+        mockPreprocessorsHooks['nutra-babel']['onFileLoad'] = hooks[1]
+        mockPreprocessorsHooks['nutra-mock']['onFileLoad'] = hooks[2]
+        mockPreprocessorsHooks['nutra-coverage']['onFileLoad'] = hooks[3]
+        nutra.preprocessorsHooks = mockPreprocessorsHooks
+
+        nutra.getFilePreprocessor = () => ['nutra-babel', 'nutra-mock', 'nutra-coverage']
         nutra.runPreprocessorOnFileLoadHooks(source, simpleFile, simpleKey)
+
         expect(hooks[1]).toHaveBeenCalledWith(source, simpleFile, simpleKey)
         expect(hooks[2]).toHaveBeenCalledWith(hook1Source, simpleFile, simpleKey)
         expect(hooks[3]).toHaveBeenCalledWith(hook2Source, simpleFile, simpleKey)
@@ -546,7 +600,14 @@ describe ('Nutra __private__.runPreprocessorOnFileLoadHooks()', () => {
             2: (source, filename) => {return hook2Source},
             3: (source, filename) => {return hook3Source}
         }
-        nutra.getPreprocessorOnFileLoadHooks = () => [hooks[1], hooks[2], hooks[3]]
+
+        mockPreprocessorsHooks['nutra-babel']['onFileLoad'] = hooks[1]
+        mockPreprocessorsHooks['nutra-mock']['onFileLoad'] = hooks[2]
+        mockPreprocessorsHooks['nutra-coverage']['onFileLoad'] = hooks[3]
+        nutra.preprocessorsHooks = mockPreprocessorsHooks
+
+        nutra.getFilePreprocessor = () => ['nutra-babel', 'nutra-mock', 'nutra-coverage']
+
         expect(nutra.runPreprocessorOnFileLoadHooks(source, simpleFile, simpleKey))
         .toBe(hook3Source)
     })
@@ -566,7 +627,14 @@ describe ('Nutra __private__.runPreprocessorOnFileLoadHooks()', () => {
         spyOn(hooks, '1').and.callThrough()
         spyOn(hooks, '2').and.callThrough()
         spyOn(hooks, '3').and.callThrough()
-        nutra.getPreprocessorOnFileLoadHooks = () => [hooks[1], hooks[2], hooks[3]]
+
+        mockPreprocessorsHooks['nutra-babel']['onFileLoad'] = hooks[1]
+        mockPreprocessorsHooks['nutra-mock']['onFileLoad'] = hooks[2]
+        mockPreprocessorsHooks['nutra-coverage']['onFileLoad'] = hooks[3]
+        nutra.preprocessorsHooks = mockPreprocessorsHooks
+
+        nutra.getFilePreprocessor = () => ['nutra-babel', 'nutra-mock', 'nutra-coverage']
+
         nutra.runPreprocessorOnFileLoadHooks(source, simpleFile, simpleKey)
         expect(hooks[1]).toHaveBeenCalledWith(source, simpleFile, simpleKey)
         expect(hooks[2]).toHaveBeenCalledWith(hook1Source, '1', simpleKey)
@@ -586,28 +654,6 @@ describe ('Nutra __private__.onFileSourceLoaded()', () => {
     it ('should return a source string', () => {
         const nutra = Nutra(SimpleNutraConfig).__private__
         expect(nutra.onFileSourceLoaded(source, '1', simpleKey)).toBe(source)
-    })
-})
-
-describe ('Nutra __private__.matchGlobs()', () => {
-    const simpleFile = Path.join(process.cwd(), '/test/src/simple.js')
-    it ('should return true if filename matches a glob in the array', () => {
-        const nutra = Nutra(SimpleNutraConfig).__private__
-        expect(nutra.matchGlobs([
-                Path.join(process.cwd(), './test/src/**'),
-                Path.join(process.cwd(), './test/specs/**')
-            ],
-            simpleFile
-        ))
-        .toBe(true)
-    })
-    it ('should return false if filename does not matches any globs in the array', () => {
-        const nutra = Nutra(SimpleNutraConfig).__private__
-        expect(nutra.matchGlobs(
-            ['./test/fake/**', './test/specs/**'],
-            simpleFile
-        ))
-        .toBe(false)
     })
 })
 
@@ -661,17 +707,17 @@ describe ('Nutra __private__.getPluginOptions()', () => {
     })
 })
 
-describe ('Nutra __private__.getPreprocessors()', () => {
+describe ('Nutra __private__.getPreprocessorsPlugins()', () => {
     const nutra = Nutra(SimpleNutraConfig).__private__
     it ('should return an array of preprocessor plugin names', () => {
-        expect(nutra.getPreprocessors({
+        expect(nutra.getPreprocessorsPlugins({
             'test/specs/**/*.js': [ 'nutra-fake1' ],
             'src/**/*.js': [ 'nutra-fake2' ]
         }))
         .toEqual([ 'nutra-fake1', 'nutra-fake2' ])
     })
     it ('should return an array of preprocessor plugin names without duplicates', () => {
-        expect(nutra.getPreprocessors({
+        expect(nutra.getPreprocessorsPlugins({
             'test/specs/**/*.js': [ 'nutra-fake' ],
             'src/**/*.js': [ 'nutra-fake' ]
         }))
@@ -679,39 +725,48 @@ describe ('Nutra __private__.getPreprocessors()', () => {
     })
 })
 
-describe ('Nutra __private__.getPreprocessorFilters()', () => {
+describe ('Nutra __private__.getPreprocessors()', () => {
     it ('should return an object of plugin names with their respective globs', () => {
         const nutra = Nutra(SimpleNutraConfig).__private__
-        expect(nutra.getPreprocessorFilters({
+        expect(nutra.getPreprocessors({
             'test/specs/**/*.js': [ 'nutra-fake1' ],
             'src/**/*.js': [ 'nutra-fake1' ],
             'fake/**/*.js': [ 'nutra-fake2' ],
-        }))
-        .toEqual({
-            'nutra-fake1': [
-                Path.join(process.cwd(), 'test/specs/**/*.js'),
-                Path.join(process.cwd(), 'src/**/*.js')
-            ],
-            'nutra-fake2': [ Path.join(process.cwd(), 'fake/**/*.js') ]
-        })
+        })).toEqual([{
+            pattern: Path.join(process.cwd(), 'test/specs/**/*.js'),
+            hooks: [ 'nutra-fake1' ]
+        }, {
+            pattern: Path.join(process.cwd(), 'src/**/*.js'),
+            hooks: [ 'nutra-fake1' ]
+        }, {
+            pattern: Path.join(process.cwd(), 'fake/**/*.js'),
+            hooks: [ 'nutra-fake2' ]
+        }])
     })
     it ('should return an object of plugin names with their absolute patterns', () => {
         const options = Object.assign({
             absolutePaths: true
         }, SimpleNutraConfig)
         const nutra = Nutra(options).__private__
-        expect(nutra.getPreprocessorFilters({
+        nutra.getPreprocessors({
             '/root/test/specs/**/*.js': [ 'nutra-fake1' ],
             '/root/src/**/*.js': [ 'nutra-fake1' ],
             '/root/fake/**/*.js': [ 'nutra-fake2' ],
-        }))
-        .toEqual({
-            'nutra-fake1': [
-                '/root/test/specs/**/*.js',
-                '/root/src/**/*.js'
-            ],
-            'nutra-fake2': ['/root/fake/**/*.js']
         })
+        expect(nutra.getPreprocessors({
+            '/root/test/specs/**/*.js': [ 'nutra-fake1' ],
+            '/root/src/**/*.js': [ 'nutra-fake1' ],
+            '/root/fake/**/*.js': [ 'nutra-fake2' ],
+        })).toEqual([{
+            pattern: '/root/test/specs/**/*.js',
+            hooks: [ 'nutra-fake1' ]
+        }, {
+            pattern: '/root/src/**/*.js',
+            hooks: [ 'nutra-fake1' ]
+        }, {
+            pattern: '/root/fake/**/*.js',
+            hooks: [ 'nutra-fake2' ]
+        }])
     })
 })
 
@@ -824,16 +879,19 @@ describe ('Nutra __private__.initPlugins()', () => {
         }])
     })
     it ('should defined filter property, if plugin is a preprocessor', () => {
-        nutra.preprocessorFilters = undefined
+        nutra.preprocessors = undefined
         nutra.initPlugins({
             'test/specs/**/*.js': ['nutra-plugin'],
             'src/**/*.js': ['nutra-plugin']
         }, 'preprocessor')
-        expect(nutra.preprocessorFilters)
-        .toEqual({'nutra-plugin': [
-            Path.join(process.cwd(), 'test/specs/**/*.js'),
-            Path.join(process.cwd(), 'src/**/*.js')
-        ]})
+        expect(nutra.preprocessors)
+        .toEqual([{
+            pattern: Path.join(process.cwd(), '/test/specs/**/*.js'),
+            hooks: [ 'nutra-plugin' ]
+        }, {
+            pattern: Path.join(process.cwd(), '/src/**/*.js'),
+            hooks: [ 'nutra-plugin' ]
+        }])
     })
     it ('should initialize moduleloader plugins', () => {
         expect(nutra.initPlugins('nutra-plugin', 'moduleloader'))

@@ -202,13 +202,17 @@ class Private {
                 plugins = [plugins]
             }
             if (type === 'preprocessor') {
-                this.preprocessorFilters = this.getPreprocessorFilters(plugins)
-                plugins = this.getPreprocessors(plugins)
+                this.preprocessors = this.getPreprocessors(plugins)
+                plugins = this.getPreprocessorsPlugins(plugins)
             }
-            return this.getPluginHooks(
+            const pluginHooks = this.getPluginHooks(
                 this.loadPlugins(plugins, type),
                 this.getEvents(type)
             )
+            if (type === 'preprocessor') {
+                this.preprocessorsHooks = this.getPreprocessorOnFileLoadHooks(pluginHooks)
+            }
+            return pluginHooks
         }
     }
 
@@ -236,7 +240,7 @@ class Private {
     }
 
     getPluginHooks (initializedPlugins, events) {
-        var pluginHooks = initializedPlugins.map(plugin => {
+        const pluginHooks = initializedPlugins.map(plugin => {
             var fishedHooks = Helper.cloneObject(events, 'sealed')
             plugin.constructor(fishedHooks, this.system, plugin.options)
             return {
@@ -255,31 +259,39 @@ class Private {
         this.runHooks('onFrameworkExecution', 'reporters', [framework])
     }
 
-    getPreprocessorOnFileLoadHooks (filename) {
-        return _.chain(this.pluginHooks['preprocessors'])
-            .filter(plugin => {
-                var globs = this.preprocessorFilters[plugin.name]
-                return (
-                    plugin.hooks &&
-                    plugin.hooks['onFileLoad'] &&
-                    typeof plugin.hooks['onFileLoad'] === 'function' &&
-                    globs &&
-                    this.matchGlobs(globs, filename) ?
-                    1 : 0
-                )
-            })
-            .map(plugin => plugin.hooks['onFileLoad'])
-            .value()
+    getFilePreprocessor(filename) {
+        const preprocessor = _(this.preprocessors)
+        .filter(plugin => Minimatch(filename, plugin.pattern))
+        .map(plugin => plugin.hooks)
+        .value()
+        // return first item since we don't overlapping preprocessing
+        return preprocessor[0] || []
+    }
+
+    getPreprocessorOnFileLoadHooks(pluginHooks) {
+        const plugins = _(pluginHooks)
+        .filter(plugin => {
+            return plugin.hooks &&
+            plugin.hooks['onFileLoad'] &&
+            typeof plugin.hooks['onFileLoad'] === 'function'
+        })
+        .map(plugin =>
+            ({ name: plugin.name, onFileLoad: plugin.hooks.onFileLoad })
+        )
+        .value()
+
+        return _.keyBy(plugins, 'name')
     }
 
     runPreprocessorOnFileLoadHooks (source, filename) {
-        var hooks = this.getPreprocessorOnFileLoadHooks(filename)
+        var hooks = this.getFilePreprocessor(filename)
 
         if (hooks.length === 0) {
             return source
         }
 
-        var final = hooks.reduce((previous, hook) => {
+        var final = hooks.reduce((previous, plugin) => {
+            const hook = this.preprocessorsHooks[plugin].onFileLoad
             var result = hook(previous.source, previous.filename, previous.key)
             if (_.isObject(result)) {
                 if (typeof result.filename === 'string') {
@@ -299,17 +311,6 @@ class Private {
         return final.source
     }
 
-    matchGlobs (globs, filename) {
-        var i = 0
-        while (i < globs.length) {
-            if (Minimatch(filename, globs[i])) {
-                return true
-            }
-            i++
-        }
-        return false
-    }
-
     expandFiles (patterns) {
         var expandedFiles = []
         patterns.forEach(pattern => {
@@ -321,30 +322,23 @@ class Private {
         return Array.from(new Set(expandedFiles))
     }
 
-    getPreprocessors (preprocessors) {
-        var results = new Set([])
-        for (var glob in preprocessors) {
+    getPreprocessors (plugins) {
+        return _(plugins)
+        .map((value, key) => ({
+            pattern: Path.join(this.system.basePath, key),
+            hooks: value
+        }))
+        .value()
+    }
+
+    getPreprocessorsPlugins(preprocessors) {
+        const results = new Set([])
+        for (let glob in preprocessors) {
             preprocessors[glob].forEach(preprocessor => {
                 results.add(preprocessor)
             })
         }
         return Array.from(results)
-    }
-
-    getPreprocessorFilters (preprocessors) {
-        const _this = this
-        var preprocessorFilters = {}
-        for (var glob in preprocessors) {
-            preprocessors[glob].forEach(preprocessor => {
-                if (!preprocessorFilters[preprocessor]) {
-                    preprocessorFilters[preprocessor] = []
-                }
-                preprocessorFilters[preprocessor].push(
-                    Path.join(_this.system.basePath, glob)
-                )
-            })
-        }
-        return preprocessorFilters
     }
 
     getPluginOptions (plugin) {
