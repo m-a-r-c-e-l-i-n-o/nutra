@@ -111,6 +111,7 @@ module.exports = function( config ) {
 - [nutra-coverage](https://github.com/m-a-r-c-e-l-i-n-o/nutra-coverage)
 - [nutra-babel](https://github.com/m-a-r-c-e-l-i-n-o/nutra-babel)
 - [nutra-minimal-reporter](https://github.com/m-a-r-c-e-l-i-n-o/nutra-jasmine)
+- [nutra-mock](https://github.com/m-a-r-c-e-l-i-n-o/nutra-mock)
 
 ## Contributing
 Pull requests are always welcome. In lieu of a formal styleguide, please:
