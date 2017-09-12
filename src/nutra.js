@@ -287,7 +287,7 @@ class Private {
         var hooks = this.getFilePreprocessor(filename)
 
         if (hooks.length === 0) {
-            return source
+            return
         }
 
         var final = hooks.reduce((previous, plugin) => {
@@ -308,7 +308,7 @@ class Private {
             }
             return {source: previous.source, filename: previous.filename, key: previous.key}
         }, {source: source, filename: filename, key: Helper.getFileKey(filename)})
-        return final.source
+        return { source: final.source, path: final.filename }
     }
 
     expandFiles (patterns) {
